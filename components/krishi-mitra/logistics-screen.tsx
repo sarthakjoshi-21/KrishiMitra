@@ -1,0 +1,33 @@
+'use client'
+
+import { useState } from 'react'
+import { Activity, ArrowLeft, ArrowRight, Check, CircleHelp, CloudSun, Droplets, IndianRupee, Leaf, MapPin, Package, ShieldCheck, Sprout, Truck, Users } from 'lucide-react'
+
+type Props = { onBack: () => void; onLogout: () => void; onNavigate: (tab: string) => void }
+
+const navGroups = [
+  { label: 'Overview', items: [{ label: 'Dashboard', tab: 'Overview', icon: Activity }] },
+  { label: 'In-Season', items: [{ label: 'My Crop', tab: 'My Listings', icon: Leaf }, { label: 'Crop Health', tab: 'My Progress', icon: Sprout }, { label: 'Irrigation', tab: 'Plan & Grow', icon: Droplets }, { label: 'Weather', tab: 'Digital Desk', icon: CloudSun }, { label: 'Kisan Sathi', tab: 'Digital Desk', icon: CircleHelp }] },
+  { label: 'Services', items: [{ label: 'Resources', tab: 'Digital Desk', icon: Package }, { label: 'Community', tab: 'Digital Desk', icon: Users }, { label: 'Schemes & Insurance', tab: 'My Progress', icon: ShieldCheck }] },
+  { label: 'Post-Harvest', items: [{ label: 'Market & Bids', tab: 'Active Bidding', icon: IndianRupee }, { label: 'Logistics', tab: 'P2P Logistics', icon: Truck }] },
+]
+
+const stops = [
+  { name: 'Rajesh Patil (You)', detail: 'Chandwad · 4 km from you', qty: '40 qt', active: true },
+  { name: 'Suresh Shinde', detail: 'Chandwad · 1.5 km from you', qty: '30 qt' },
+  { name: 'Mahadev Jadhav', detail: 'Niphad · 9 km from you', qty: '25 qt' },
+]
+
+export default function LogisticsScreen({ onBack, onLogout, onNavigate }: Props) {
+  const [joined, setJoined] = useState(false)
+  return <div className="logistics-page min-h-screen bg-background">
+    <header className="topbar"><button onClick={() => onNavigate('Overview')} className="secondary-button"><ArrowLeft className="size-4" /> Dashboard</button><button onClick={onLogout} className="secondary-button">Logout</button></header>
+    <div className="app-layout"><aside className="sidebar"><div className="farmer-sidebar-nav">{navGroups.map((group) => <div key={group.label} className="farmer-nav-group"><p className="eyebrow">{group.label}</p>{group.items.map(({ label, tab, icon: Icon }) => <button key={label} onClick={() => onNavigate(tab)} className={`side-nav ${tab === 'P2P Logistics' ? 'active' : ''}`}><Icon className="size-5" />{label}</button>)}</div>)}</div><div className="farmer-profile"><div className="farmer-avatar">R</div><div><p className="text-sm font-bold text-foreground">Rajesh Patil</p><p className="text-xs text-muted-foreground">Demo Farmer</p></div><button onClick={onLogout} aria-label="Logout" className="ml-auto text-primary"><ArrowRight className="size-5 rotate-180" /></button></div></aside><main className="dashboard-main mx-auto flex max-w-6xl flex-col gap-5">
+
+      <section className="logistics-hero"><div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/15"><Truck className="size-7" /></div><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold text-white sm:text-3xl">Pooled Logistics</h1><span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-900">Simulated</span></div><p className="mt-1 text-sm leading-6 text-white/80">Share transport with nearby farmers shipping the same crop to the same buyer. Lower cost per farmer, higher net realisation.</p></div></section>
+      <section className="logistics-panel"><div className="mb-5 flex items-center gap-2"><Check className="size-5 text-primary" /><h2 className="text-xl font-bold">Pool match found</h2><span className="tag">3 farmers</span></div><div className="grid gap-3 md:grid-cols-3"><div className="logistics-detail"><span>Crop</span><strong>Onion</strong></div><div className="logistics-detail"><span>Destination</span><strong>FreshFields Agro Processor</strong></div><div className="logistics-detail"><span>Truck capacity</span><strong>100 quintals</strong></div></div><div className="mt-5 rounded-2xl border border-primary/15 bg-card p-5"><p className="eyebrow mb-4">Pickup route</p><div className="flex flex-col">{stops.map((stop, index) => <div key={stop.name} className="relative flex items-center gap-4 py-2"><div className={`route-marker ${stop.active ? 'active' : ''}`}>{index + 1}</div>{index < stops.length - 1 && <span className="route-line" />}<div className="min-w-0 flex-1"><p className="font-bold text-foreground">{stop.name}</p><p className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="size-3" />{stop.detail}</p></div><span className="tag">{stop.qty}</span></div>)}<div className="flex items-center gap-4 py-2"><div className="route-marker destination"><ArrowRight className="size-4" /></div><div><p className="font-bold text-foreground">FreshFields Agro Processor, Sinnar</p><p className="text-sm text-muted-foreground">Final destination</p></div></div></div></div><div className="mt-5 grid gap-3 md:grid-cols-2"><div className="logistics-cost"><span>Without pooling (solo)</span><strong>₹4,200</strong><small>Full truck cost borne by you alone</small></div><div className="logistics-cost pooled"><span>With pooled logistics</span><strong>₹1,400</strong><small>Shared across 3 farmers</small></div></div><div className="savings-banner"><div><p className="text-sm font-semibold text-white/80">Your estimated savings</p><strong>₹1,450</strong></div><div className="text-right"><p className="text-sm font-semibold text-white/80">Total pooled load</p><strong>95 quintals</strong></div></div></section>
+      <section className="logistics-panel"><div className="mb-5 flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-secondary text-primary"><Truck className="size-5" /></div><h2 className="text-xl font-bold">How pooled logistics works</h2></div><div className="flex flex-col gap-3">{['System finds farmers with the same crop, nearby location, similar destination and timing.','Farmers are grouped to fill a shared truck. Transport cost is divided proportionally by volume.','Each farmer pays only their share — lower cost per farmer, higher net realisation.','The buyer receives a consolidated delivery with individual lot tracking.'].map((step, index) => <div key={step} className="logistics-step"><span>{index + 1}</span><p>{step}</p></div>)}</div></section>
+      <div className="flex flex-col gap-3 sm:flex-row"><button onClick={() => setJoined(!joined)} className="action-button flex-1 justify-center"><Users className="size-5" />{joined ? 'Joined this logistics pool' : 'Join this logistics pool'}</button><button className="secondary-button h-14 justify-center px-6">Find other pools</button></div>
+    </main></div>
+  </div>
+}
