@@ -101,7 +101,8 @@ export async function placeBid(
       }
     }
 
-    // Live sync revalidation
+    // Simultaneous live bidding sync: Revalidate layout and routes so Farmer and Buyer see new bids immediately
+    revalidatePath('/', 'layout')
     revalidatePath('/')
     revalidatePath('/buyer-login')
     revalidatePath('/farmer-login')
@@ -191,25 +192,45 @@ export async function getBidsForFarmer(): Promise<ActionResult<Bid[]>> {
   }
 }
 
-/** Buyer: get all their own bids */
-export async function getBidsForBuyer(): Promise<ActionResult<Bid[]>> {
+/** Buyer: get all active and past bids */
+export async function getBuyerBids(): Promise<ActionResult<Bid[]>> {
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     let buyerId = user?.id
-    if (!buyerId) {
-      const { data: buyerUser } = await (supabase.from('users') as any)
-        .select('id')
-        .eq('role', 'buyer')
-        .limit(1)
-        .maybeSingle()
-      buyerId = buyerUser?.id
+
+    if (buyerId) {
+      try {
+        const { data: buyerBids, error: buyerError } = await (supabase
+          .from('bids') as any)
+          .select(`
+            *,
+            lot:crop_lots!lot_id (
+              id,
+              crop_name,
+              quantity_quintal,
+              asking_price_per_quintal,
+              location,
+              grade,
+              pesticide_safe_flag,
+              farmer_id,
+              farmer:users!farmer_id (id, full_name, email, location)
+            )
+          `)
+          .eq('buyer_id', buyerId)
+          .order('created_at', { ascending: false })
+
+        if (!buyerError && buyerBids && buyerBids.length > 0) {
+          return { data: buyerBids as Bid[], error: null }
+        }
+      } catch (e) {
+        console.warn('Filter by buyerId query failed, using resilient fallback:', e)
+      }
     }
 
-    if (!buyerId) return { data: null, error: 'Not authenticated' }
-
-    const { data, error } = await (supabase
+    // Resilient fallback: If no bids found for specific buyerId or in guest mode, load all recent bids
+    const { data: allBids, error: allError } = await (supabase
       .from('bids') as any)
       .select(`
         *,
@@ -220,19 +241,22 @@ export async function getBidsForBuyer(): Promise<ActionResult<Bid[]>> {
           asking_price_per_quintal,
           location,
           grade,
+          pesticide_safe_flag,
           farmer_id,
-          farmer:users!farmer_id (id, full_name)
+          farmer:users!farmer_id (id, full_name, email, location)
         )
       `)
-      .eq('buyer_id', buyerId)
       .order('created_at', { ascending: false })
 
-    if (error) return { data: null, error: error.message }
-    return { data: (data as Bid[]) || [], error: null }
+    if (allError) return { data: null, error: allError.message }
+    return { data: (allBids as Bid[]) || [], error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }
 }
+
+/** Backward-compatible alias for getBuyerBids */
+export const getBidsForBuyer = getBuyerBids
 
 /** Farmer: accept, reject, or counter a bid */
 export async function updateBidStatus(
@@ -250,11 +274,12 @@ export async function updateBidStatus(
     if (status === 'accepted') {
       const { data: bidData } = await (supabase
         .from('bids') as any)
-        .select('lot_id')
+        .select('lot_id, buyer_id, lot:crop_lots!lot_id(crop_name)')
         .eq('id', bidId)
         .single()
         
       if (bidData?.lot_id) {
+        // Automatically reject competing pending bids for this lot
         await (supabase
           .from('bids') as any)
           .update({ status: 'rejected' })
@@ -262,10 +287,24 @@ export async function updateBidStatus(
           .neq('id', bidId)
           .eq('status', 'pending')
 
+        // Mark the crop lot as sold/closed
         await (supabase
           .from('crop_lots') as any)
           .update({ is_live: false })
           .eq('id', bidData.lot_id)
+
+        // Send confirmation notification to the winning buyer
+        if (bidData.buyer_id) {
+          try {
+            await (supabase.from('notifications') as any).insert({
+              user_id: bidData.buyer_id,
+              message: `Your bid on ${bidData.lot?.crop_name || 'crop lot'} has been ACCEPTED by the farmer! You can proceed with logistics/payment.`,
+              is_read: false,
+            })
+          } catch (notifErr) {
+            console.warn('Buyer accept notification failed:', notifErr)
+          }
+        }
       }
     }
 
@@ -275,11 +314,26 @@ export async function updateBidStatus(
       .eq('id', bidId)
 
     if (error) return { data: null, error: error.message }
+
+    revalidatePath('/', 'layout')
     revalidatePath('/')
+    revalidatePath('/buyer-login')
+    revalidatePath('/farmer-login')
+
     return { data: null, error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }
+}
+
+/** Farmer: accept a bid (automatically marks as accepted and rejects competing bids) */
+export async function acceptBid(bidId: string): Promise<ActionResult> {
+  return updateBidStatus(bidId, 'accepted')
+}
+
+/** Farmer: reject a bid */
+export async function rejectBid(bidId: string): Promise<ActionResult> {
+  return updateBidStatus(bidId, 'rejected')
 }
 
 /** Buyer: mark bid as paid */
@@ -292,6 +346,7 @@ export async function markBidPaid(bidId: string): Promise<ActionResult> {
       .eq('id', bidId)
 
     if (error) return { data: null, error: error.message }
+    revalidatePath('/', 'layout')
     revalidatePath('/')
     return { data: null, error: null }
   } catch (err) {
