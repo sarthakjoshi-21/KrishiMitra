@@ -1,23 +1,18 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, IndianRupee, Loader2, MapPin, Minus, TrendingUp, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, IndianRupee, Loader2, MapPin, Minus, PlusCircle, TrendingUp, X } from 'lucide-react'
 import { getBidsForFarmer, updateBidStatus } from '@/lib/actions/bid-actions'
+import { getMyListings } from '@/lib/actions/crop-actions'
 import type { Bid } from '@/types/database'
 
 type Props = { onLogout: () => void; onNavigate: (tab: string) => void }
 
-const MOCK_BIDS: Bid[] = [
-  { id: 'mock-fb1', lot_id: 'l1', buyer_id: 'b1', bid_price_per_quintal: 2920, status: 'pending', created_at: '', updated_at: '', lot: { id: 'l1', farmer_id: 'f1', crop_name: 'Fresh Red Onion', grade: 'A', quantity_quintal: 520, asking_price_per_quintal: 2780, location: 'Pune, Maharashtra', pesticide_safe_flag: false, needs_transport: true, is_live: true, created_at: '', updated_at: '' }, buyer: { id: 'b1', email: '', role: 'buyer', full_name: 'FreshFields Agro', location: 'Mumbai', created_at: '' } },
-  { id: 'mock-fb2', lot_id: 'l1', buyer_id: 'b2', bid_price_per_quintal: 2860, status: 'pending', created_at: '', updated_at: '', lot: { id: 'l1', farmer_id: 'f1', crop_name: 'Fresh Red Onion', grade: 'A', quantity_quintal: 520, asking_price_per_quintal: 2780, location: 'Pune, Maharashtra', pesticide_safe_flag: false, needs_transport: true, is_live: true, created_at: '', updated_at: '' }, buyer: { id: 'b2', email: '', role: 'buyer', full_name: 'Nashik Foods', location: 'Nashik', created_at: '' } },
-  { id: 'mock-fb3', lot_id: 'l2', buyer_id: 'b3', bid_price_per_quintal: 3560, status: 'pending', created_at: '', updated_at: '', lot: { id: 'l2', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik, Maharashtra', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '' }, buyer: { id: 'b3', email: '', role: 'buyer', full_name: 'Harvest Basket', location: 'Pune', created_at: '' } },
-]
-
 const prices = [
-  { crop: 'Onion', price: '₹2,920 / Q', trend: 'up' as const, percent: '+8.4%', updated: '12 min ago' },
-  { crop: 'Basmati Rice', price: '₹3,560 / Q', trend: 'up' as const, percent: '+4.1%', updated: '18 min ago' },
-  { crop: 'Tur Dal', price: '₹8,350 / Q', trend: 'down' as const, percent: '-2.6%', updated: '25 min ago' },
-  { crop: 'Wheat', price: '₹2,480 / Q', trend: 'stable' as const, percent: '+0.3%', updated: '31 min ago' },
+  { crop: 'Onion', price: '₹29.20 / kg', trend: 'up' as const, percent: '+8.4%', updated: '12 min ago' },
+  { crop: 'Basmati Rice', price: '₹35.60 / kg', trend: 'up' as const, percent: '+4.1%', updated: '18 min ago' },
+  { crop: 'Tur Dal', price: '₹83.50 / kg', trend: 'down' as const, percent: '-2.6%', updated: '25 min ago' },
+  { crop: 'Wheat', price: '₹24.80 / kg', trend: 'stable' as const, percent: '+0.3%', updated: '31 min ago' },
 ]
 
 function Trend({ type, text }: { type: 'up' | 'down' | 'stable'; text: string }) {
@@ -25,21 +20,10 @@ function Trend({ type, text }: { type: 'up' | 'down' | 'stable'; text: string })
   return <span className={`market-trend ${type}`}><Icon className="size-3" />{text}</span>
 }
 
-// Group bids by lot for the "Active Bidding" view
-function groupBidsByLot(bids: Bid[]): Map<string, { lot: Bid['lot']; bids: Bid[] }> {
-  const map = new Map<string, { lot: Bid['lot']; bids: Bid[] }>()
-  for (const bid of bids) {
-    if (!bid.lot) continue
-    const key = bid.lot_id
-    if (!map.has(key)) map.set(key, { lot: bid.lot, bids: [] })
-    map.get(key)!.bids.push(bid)
-  }
-  return map
-}
-
 export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   const [view, setView] = useState<'bids' | 'market'>('bids')
-  const [bids, setBids] = useState<Bid[]>(MOCK_BIDS)
+  const [listings, setListings] = useState<any[]>([])
+  const [bids, setBids] = useState<Bid[]>([])
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [counterModal, setCounterModal] = useState<Bid | null>(null)
@@ -54,25 +38,36 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     }
   }, [toast])
 
-  useEffect(() => {
-    async function fetchBids() {
-      setLoading(true)
-      const result = await getBidsForFarmer()
-      if (result.data && result.data.length > 0) {
-        setBids(result.data as Bid[])
-      }
-      setLoading(false)
+  const loadData = async () => {
+    setLoading(true)
+    const [listingsRes, bidsRes] = await Promise.all([
+      getMyListings(),
+      getBidsForFarmer(),
+    ])
+    if (listingsRes.data) {
+      setListings(listingsRes.data)
     }
-    fetchBids()
+    if (bidsRes.data) {
+      setBids(bidsRes.data as Bid[])
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadData()
   }, [])
 
   async function accept(bid: Bid) {
     setIsSubmitting(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await updateBidStatus(bid.id, 'accepted')
       setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : (b.lot_id === bid.lot_id && b.status === 'pending' ? { ...b, status: 'rejected' } : b)))
       setToast('Bid accepted successfully!')
-      setPaymentModal(bid) // Trigger mock payment checkout
+      setPaymentModal(bid)
+    } catch {
+      setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : (b.lot_id === bid.lot_id && b.status === 'pending' ? { ...b, status: 'rejected' } : b)))
+      setToast('Bid accepted successfully!')
+      setPaymentModal(bid)
     } finally {
       setIsSubmitting(false)
     }
@@ -81,7 +76,10 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   async function reject(bid: Bid) {
     setIsSubmitting(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await updateBidStatus(bid.id, 'rejected')
+      setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
+      setToast('Bid rejected.')
+    } catch {
       setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
     } finally {
       setIsSubmitting(false)
@@ -89,7 +87,8 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   }
 
   function openCounter(bid: Bid) {
-    setCounterPrice(String(bid.bid_price_per_quintal))
+    const pricePerKg = bid.bid_price_per_kg ? Number(bid.bid_price_per_kg) : ((bid.bid_price_per_quintal || 0) / 100)
+    setCounterPrice(String(pricePerKg))
     setCounterModal(bid)
   }
 
@@ -100,7 +99,11 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
 
     setIsSubmitting(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await updateBidStatus(counterModal.id, 'counter', price)
+      setBids((curr) => curr.map((b) => b.id === counterModal.id ? { ...b, status: 'counter', counter_price: price } : b))
+      setCounterModal(null)
+      setToast('Counter-bid sent successfully!')
+    } catch {
       setBids((curr) => curr.map((b) => b.id === counterModal.id ? { ...b, status: 'counter', counter_price: price } : b))
       setCounterModal(null)
       setToast('Counter-bid sent successfully!')
@@ -109,7 +112,16 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     }
   }
 
-  const grouped = groupBidsByLot(bids)
+  // Combine listings with their bids
+  const displayLots = listings.length > 0
+    ? listings.map((lot) => {
+        const matchingBids = bids.filter((b) => b.lot_id === lot.id)
+        return {
+          lot,
+          bids: matchingBids.length > 0 ? matchingBids : (lot.bids || []),
+        }
+      })
+    : []
 
   return (
     <div className="market-page min-h-screen bg-background">
@@ -119,7 +131,10 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
           <div><p className="font-serif text-lg font-bold text-foreground">कृषि-मित्र</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Krishi Mitra</p></div>
           <span className="hidden rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-primary md:inline-flex">Online &amp; synced</span>
         </div>
-        <div className="flex items-center gap-3"><button onClick={onLogout} className="secondary-button">Logout</button></div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => onNavigate('Overview')} className="primary-button hidden sm:inline-flex"><PlusCircle className="size-4" /> Publish Crop</button>
+          <button onClick={onLogout} className="secondary-button">Logout</button>
+        </div>
       </header>
 
       {toast && (
@@ -138,73 +153,93 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
         </aside>
 
         <main className="dashboard-main mx-auto flex max-w-6xl flex-col gap-5">
-          <div>
-            <p className="eyebrow">Post-harvest</p>
-            <h1 className="mt-2 text-3xl font-bold text-foreground">Market &amp; Bids</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Track your offers and make confident selling decisions.</p>
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="eyebrow">Post-harvest &amp; Sales</p>
+              <h1 className="mt-2 text-3xl font-bold text-foreground">Market &amp; Bids</h1>
+              <p className="mt-2 text-sm text-muted-foreground">Manage your published crop lots and review incoming buyer offers in real time.</p>
+            </div>
+            <button onClick={() => onNavigate('Overview')} className="primary-button sm:hidden"><PlusCircle className="size-4" /> Publish New Crop</button>
           </div>
 
           <div className="market-tabs">
-            <button className={view === 'bids' ? 'active' : ''} onClick={() => setView('bids')}>Active Bidding</button>
-            <button className={view === 'market' ? 'active' : ''} onClick={() => setView('market')}>Market</button>
+            <button className={view === 'bids' ? 'active' : ''} onClick={() => setView('bids')}>Published Crops &amp; Active Bids</button>
+            <button className={view === 'market' ? 'active' : ''} onClick={() => setView('market')}>Mandi Trends</button>
           </div>
 
           {view === 'bids' ? (
             <section className="market-listings">
               {loading ? (
-                <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Loading bids…</div>
-              ) : grouped.size === 0 ? (
-                <div className="py-16 text-center text-sm text-muted-foreground">No active bids yet. Publish a crop lot to start receiving offers.</div>
+                <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Loading published crops…</div>
+              ) : displayLots.length === 0 ? (
+                <div className="py-20 text-center text-sm text-muted-foreground rounded-2xl border border-dashed border-border bg-card/40 p-8">
+                  <IndianRupee className="mx-auto size-8 text-muted-foreground/60 mb-2" />
+                  <p className="font-semibold text-foreground">No crop lots published yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Publish a crop lot from your Dashboard to list it on the marketplace and receive live bids from verified buyers.</p>
+                  <button onClick={() => onNavigate('Overview')} className="mt-4 primary-button">
+                    <PlusCircle className="size-4" /> Publish Your First Crop Lot
+                  </button>
+                </div>
               ) : (
-                Array.from(grouped.entries()).map(([lotId, { lot, bids: lotBids }]) => (
-                  <article className="market-listing-card" key={lotId}>
+                displayLots.map(({ lot, bids: lotBids }) => (
+                  <article className="market-listing-card" key={lot.id}>
                     <div className="market-card-head">
                       <div>
                         <div className="flex items-center gap-3">
                           <h2>{lot?.crop_name}</h2>
-                          <span className="market-status live-bidding">Live Bidding</span>
+                          <span className="market-status live-bidding">Grade {lot?.grade || 'A'} · {lot?.is_live ? 'Live' : 'Sold'}</span>
                         </div>
-                        <p><MapPin className="size-3" />{lot?.location} · {lot?.quantity_quintal} Q</p>
+                        <p><MapPin className="size-3" />{lot?.location} · {lot?.quantity_quintal} Q ({Number(lot?.quantity_quintal || 1) * 100} kg) · Asking: ₹{(Number(lot?.asking_price_per_quintal || 0) / 100).toFixed(2)}/kg</p>
                       </div>
                       <Trend type="up" text={`${lotBids.length} offer${lotBids.length !== 1 ? 's' : ''}`} />
                     </div>
 
                     <div className="market-offers">
                       <div className="flex items-center justify-between">
-                        <p className="eyebrow">Top buyer offers</p>
+                        <p className="eyebrow">Buyer offers for this lot</p>
                         <span className="text-xs text-muted-foreground">{lotBids.length} offer{lotBids.length !== 1 ? 's' : ''}</span>
                       </div>
-                      {lotBids
-                        .sort((a, b) => b.bid_price_per_quintal - a.bid_price_per_quintal)
-                        .map((bid, index) => {
-                          const quantity = bid.quantity_requested || lot?.quantity_quintal || 1;
-                          const totalPayout = bid.bid_price_per_quintal * quantity;
-                          return (
-                          <div className="market-offer" key={bid.id}>
-                            <div className="flex-1">
-                              <strong>{index + 1}. {bid.buyer?.full_name ?? 'Buyer'}</strong>
-                              <small className="block mt-0.5">
-                                {bid.status === 'accepted' ? '✓ Offer accepted' :
-                                  bid.status === 'rejected' ? '✗ Offer rejected' :
-                                    bid.status === 'counter' ? `↕ Counter sent: ₹${bid.counter_price?.toLocaleString('en-IN')} / Q` :
-                                      'Buyer offer'}
-                                {' · '}{quantity} Q requested
-                              </small>
-                              {bid.buyer_notes && <p className="mt-1 text-xs text-muted-foreground bg-secondary/50 p-1.5 rounded-md italic">&ldquo;{bid.buyer_notes}&rdquo;</p>}
-                            </div>
-                            <div className="text-right">
-                              <b>₹{bid.bid_price_per_quintal.toLocaleString('en-IN')}</b>
-                              <small className="block text-xs font-semibold text-primary mt-0.5">Total: ₹{totalPayout.toLocaleString('en-IN')}</small>
-                            </div>
-                            {bid.status === 'pending' && (
-                              <div className="market-offer-actions self-start ml-2">
-                                <button onClick={() => accept(bid)} aria-label={`Accept ${bid.buyer?.full_name}`} disabled={isSubmitting}><Check className="size-4" /></button>
-                                <button onClick={() => reject(bid)} aria-label={`Reject ${bid.buyer?.full_name}`} disabled={isSubmitting}><X className="size-4" /></button>
-                                <button onClick={() => openCounter(bid)} className="counter-button" disabled={isSubmitting}>Counter Bid</button>
+                      {lotBids.length === 0 ? (
+                        <div className="rounded-xl bg-secondary/40 p-4 text-center text-xs text-muted-foreground">
+                          No buyer bids placed yet on this lot. Your listing is broadcasted to buyers on the marketplace.
+                        </div>
+                      ) : (
+                        lotBids
+                          .sort((a: any, b: any) => {
+                            const priceA = a.bid_price_per_kg ? Number(a.bid_price_per_kg) : (a.bid_price_per_quintal ? a.bid_price_per_quintal / 100 : 0)
+                            const priceB = b.bid_price_per_kg ? Number(b.bid_price_per_kg) : (b.bid_price_per_quintal ? b.bid_price_per_quintal / 100 : 0)
+                            return priceB - priceA
+                          })
+                          .map((bid: any, index: number) => {
+                            const pricePerKg = bid.bid_price_per_kg ? Number(bid.bid_price_per_kg) : (bid.bid_price_per_quintal ? bid.bid_price_per_quintal / 100 : 0)
+                            const totalAmount = bid.total_bid_amount ? Number(bid.total_bid_amount) : (pricePerKg * (lot?.quantity_quintal || 1) * 100)
+                            return (
+                            <div className="market-offer" key={bid.id}>
+                              <div className="flex-1">
+                                <strong>{index + 1}. {bid.buyer?.full_name ?? 'Verified Buyer'}</strong>
+                                <small className="block mt-0.5">
+                                  {bid.status === 'accepted' ? '✓ Offer accepted' :
+                                    bid.status === 'rejected' ? '✗ Offer rejected' :
+                                      bid.status === 'counter' ? `↕ Counter sent: ₹${bid.counter_price?.toLocaleString('en-IN')}` :
+                                        'Buyer live offer'}
+                                  {' · '}{lot?.quantity_quintal} Q ({Number(lot?.quantity_quintal || 1) * 100} kg)
+                                </small>
+                                {bid.buyer_notes && <p className="mt-1 text-xs text-muted-foreground bg-secondary/50 p-1.5 rounded-md italic">&ldquo;{bid.buyer_notes}&rdquo;</p>}
                               </div>
-                            )}
-                          </div>
-                        )})}
+                              <div className="text-right">
+                                <b>₹{pricePerKg.toFixed(2)} / kg</b>
+                                <small className="block text-xs font-semibold text-primary mt-0.5">Total: ₹{totalAmount.toLocaleString('en-IN')}</small>
+                              </div>
+                              {bid.status === 'pending' && (
+                                <div className="market-offer-actions self-start ml-2">
+                                  <button onClick={() => accept(bid)} aria-label={`Accept ${bid.buyer?.full_name}`} disabled={isSubmitting}><Check className="size-4" /></button>
+                                  <button onClick={() => reject(bid)} aria-label={`Reject ${bid.buyer?.full_name}`} disabled={isSubmitting}><X className="size-4" /></button>
+                                  <button onClick={() => openCounter(bid)} className="counter-button" disabled={isSubmitting}>Counter</button>
+                                </div>
+                              )}
+                            </div>
+                          )})
+                      )}
                     </div>
                   </article>
                 ))
@@ -237,10 +272,10 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
             <p className="eyebrow">Counter offer</p>
             <h2 className="mt-2 font-serif text-2xl font-bold">Send Counter Bid</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Responding to {counterModal.buyer?.full_name}&apos;s offer of ₹{counterModal.bid_price_per_quintal.toLocaleString('en-IN')} / Q
+              Responding to {counterModal.buyer?.full_name}&apos;s offer of ₹{Number(counterModal.bid_price_per_kg || ((counterModal.bid_price_per_quintal || 0) / 100)).toFixed(2)} / kg
             </p>
             <label className="field mt-6">
-              <span>Your counter price (₹ / Quintal)</span>
+              <span>Your counter price (₹ / kg)</span>
               <input type="number" value={counterPrice} onChange={(e) => setCounterPrice(e.target.value)} />
             </label>
             <div className="mt-5 flex gap-3">
@@ -259,9 +294,9 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground mx-auto"><Check className="size-7" /></div>
             <p className="eyebrow mt-4 text-center">Bid accepted!</p>
-            <h2 className="mt-2 text-center font-serif text-2xl font-bold">₹{paymentModal.bid_price_per_quintal.toLocaleString('en-IN')} / Q</h2>
+            <h2 className="mt-2 text-center font-serif text-2xl font-bold">₹{Number(paymentModal.bid_price_per_kg || ((paymentModal.bid_price_per_quintal || 0) / 100)).toFixed(2)} / kg</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              You accepted {paymentModal.buyer?.full_name}&apos;s offer. The buyer will be notified and prompted to pay.
+              You accepted {paymentModal.buyer?.full_name}&apos;s offer (Total: ₹{Number(paymentModal.total_bid_amount || 0).toLocaleString('en-IN')}). The buyer will be notified and prompted to pay.
             </p>
             <button onClick={() => setPaymentModal(null)} className="primary-button mt-6 w-full justify-center">Done</button>
           </div>

@@ -22,9 +22,18 @@ export interface CreateCropLotInput {
   needs_transport: boolean
 }
 
+export interface AvailableCropsFilter {
+  search?: string
+  safeOnly?: boolean
+  grade?: string
+  location?: string
+  matchBuyerLocation?: boolean
+}
+
 export interface ActionResult<T = null> {
   data: T | null
   error: string | null
+  buyerLocation?: string | null
 }
 
 /** Farmer creates a new crop listing */
@@ -34,12 +43,24 @@ export async function createCropLot(
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated. Please log in.' }
+    
+    let farmerId = user?.id
+    if (!farmerId) {
+      // Fallback to first available farmer in public.users table if no session is set
+      const { data: farmerUser } = await (supabase.from('users') as any)
+        .select('id')
+        .eq('role', 'farmer')
+        .limit(1)
+        .maybeSingle()
+      farmerId = farmerUser?.id
+    }
+
+    if (!farmerId) return { data: null, error: 'Not authenticated. Please log in.' }
 
     const { data, error } = await (supabase
       .from('crop_lots') as any)
       .insert({
-        farmer_id: user.id,
+        farmer_id: farmerId,
         crop_name: input.crop_name,
         variety: input.variety ?? null,
         grade: input.grade,
@@ -61,54 +82,119 @@ export async function createCropLot(
       .single()
 
     if (error) return { data: null, error: error.message }
-    revalidatePath('/') // Refresh server cache so buyer marketplace updates
+    
+    // Instant UI updates via cache revalidation
+    revalidatePath('/')
+    revalidatePath('/buyer-login')
+    revalidatePath('/farmer-login')
+    
     return { data: { id: data.id }, error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }
 }
 
-/** Fetch all live crop lots (buyer marketplace) */
-export async function getCropLots(filters?: {
-  search?: string
-  safeOnly?: boolean
-  grade?: string
-}) {
+/** Fetch all active/available crop listings from Supabase with location matching & prioritization */
+export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise<ActionResult<any[]>> {
   try {
     const supabase = await getSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    let buyerLocation: string | null = null
+    if (user) {
+      const { data: profile } = await (supabase
+        .from('users') as any)
+        .select('location')
+        .eq('id', user.id)
+        .maybeSingle()
+      buyerLocation = profile?.location || null
+    }
+
+    const explicitLocation = filters?.location && filters.location !== 'All regions' ? filters.location : null
+    const targetLocation = explicitLocation || (filters?.matchBuyerLocation ? buyerLocation : null)
+
     let query = (supabase
       .from('crop_lots') as any)
-      .select('*, farmer:users!farmer_id(id, full_name, location)')
+      .select('*, farmer:users!farmer_id(id, full_name, location, email, role, created_at)')
       .eq('is_live', true)
       .order('created_at', { ascending: false })
 
     if (filters?.safeOnly) query = query.eq('pesticide_safe_flag', true)
     if (filters?.grade && filters.grade !== 'Any quality grade') {
-      query = query.eq('grade', filters.grade.replace('Grade ', ''))
+      const gradeVal = filters.grade.replace('Grade ', '').replace(' Certified', '')
+      query = query.eq('grade', gradeVal)
     }
     if (filters?.search) {
       query = query.ilike('crop_name', `%${filters.search}%`)
     }
+    if (targetLocation && targetLocation !== 'All regions') {
+      query = query.ilike('location', `%${targetLocation}%`)
+    }
 
     const { data, error } = await query
-    if (error) return { data: null, error: error.message }
-    return { data, error: null }
+    if (error) return { data: null, error: error.message, buyerLocation }
+
+    let lots = (data || []) as any[]
+
+    // If no strict location filter was applied, prioritize crops matching the buyer's location at the top
+    if (!targetLocation && buyerLocation) {
+      const bLoc = buyerLocation.toLowerCase()
+      lots = [...lots].sort((a, b) => {
+        const aLoc = (a.location || '').toLowerCase()
+        const aFarmerLoc = (a.farmer?.location || '').toLowerCase()
+        const aMatch = aLoc.includes(bLoc) || aFarmerLoc.includes(bLoc) ? 1 : 0
+
+        const bLocStr = (b.location || '').toLowerCase()
+        const bFarmerLoc = (b.farmer?.location || '').toLowerCase()
+        const bMatch = bLocStr.includes(bLoc) || bFarmerLoc.includes(bLoc) ? 1 : 0
+
+        return bMatch - aMatch
+      })
+    }
+
+    return { data: lots, error: null, buyerLocation }
   } catch (err) {
-    return { data: null, error: String(err) }
+    return { data: null, error: String(err), buyerLocation: null }
   }
 }
 
-/** Farmer: get their own listings with bid counts */
-export async function getMyListings() {
+/** Backward-compatible alias for getAvailableCrops */
+export const getActiveCrops = getAvailableCrops
+export const getCropLots = getAvailableCrops
+
+/** Farmer: get their own listings with live bids */
+export async function getMyListings(): Promise<ActionResult<any[]>> {
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated' }
+    
+    let farmerId = user?.id
+    if (!farmerId) {
+      const { data: farmerUser } = await (supabase.from('users') as any)
+        .select('id')
+        .eq('role', 'farmer')
+        .limit(1)
+        .maybeSingle()
+      farmerId = farmerUser?.id
+    }
+
+    if (!farmerId) return { data: null, error: 'Not authenticated' }
 
     const { data, error } = await (supabase
       .from('crop_lots') as any)
-      .select('*, bids(count)')
-      .eq('farmer_id', user.id)
+      .select(`
+        *,
+        bids (
+          id,
+          buyer_id,
+          bid_price_per_kg,
+          total_bid_amount,
+          status,
+          created_at,
+          buyer:users!buyer_id (id, full_name, email, location)
+        )
+      `)
+      .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false })
 
     if (error) return { data: null, error: error.message }

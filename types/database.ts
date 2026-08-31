@@ -49,18 +49,29 @@ export interface Bid {
   id: string
   lot_id: string               // FK → crop_lots.id
   buyer_id: string             // FK → users.id
-  bid_price_per_quintal: number
+  bid_price_per_kg: number
+  total_bid_amount: number
+  status: BidStatus
+  created_at: string
+  // Optional / backward-compatible
+  bid_price_per_quintal?: number
   preferred_delivery_date?: string | null
   transport_preference?: 'seller_delivery' | 'self_pickup' | null
   quantity_requested?: number | null
   buyer_notes?: string | null
-  status: BidStatus
   counter_price?: number | null
-  created_at: string
-  updated_at: string
+  updated_at?: string
   // Joined
   lot?: CropLot
   buyer?: AppUser
+}
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  message: string
+  is_read: boolean
+  created_at: string
 }
 
 // -------------------------------------------------------
@@ -85,6 +96,12 @@ export type Database = {
         Row: Bid
         Insert: Omit<Bid, 'id' | 'created_at' | 'updated_at' | 'lot' | 'buyer'>
         Update: Partial<Omit<Bid, 'id' | 'created_at' | 'lot' | 'buyer'>>
+        Relationships: any[]
+      }
+      notifications: {
+        Row: AppNotification
+        Insert: Omit<AppNotification, 'id' | 'created_at'>
+        Update: Partial<Omit<AppNotification, 'id' | 'created_at'>>
         Relationships: any[]
       }
     }

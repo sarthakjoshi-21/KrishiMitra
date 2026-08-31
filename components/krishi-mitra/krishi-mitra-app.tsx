@@ -1,10 +1,13 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Activity, ArrowRight, Bell, Camera, Check, ChevronDown, CloudSun, IndianRupee, Leaf, Loader2, MapPin, Menu, Mic, Package, Search, ShieldCheck, Sprout, Truck, Upload, Volume2, X } from 'lucide-react'
-import { createCropLot } from '@/lib/actions/crop-actions'
+import { createCropLot, getActiveCrops } from '@/lib/actions/crop-actions'
 import { getBidsForFarmer } from '@/lib/actions/bid-actions'
+import { getNotificationsForUser, markNotificationRead } from '@/lib/actions/notification-actions'
+import { getSession, signOut } from '@/lib/actions/auth-actions'
+import type { AppNotification, CropLot } from '@/types/database'
 import LoginScreen from './login-screen'
 import { LanguageProvider, useLanguage } from './language-context'
 import LogisticsScreen from './logistics-screen'
@@ -21,10 +24,10 @@ import BuyerProfileScreen from './buyer-profile-screen'
 import MyBidsScreen from './my-bids-screen'
 import { FarmerSidebar as SharedFarmerSidebar, farmerNavItems } from './farmer-sidebar'
 
-const lots = [
-  { crop: 'Premium Basmati Rice', farmer: 'Ramesh Patil', location: 'Nashik, Maharashtra', grade: 'A', qty: '240 Q', price: '₹3,420', bid: '₹3,560', safe: true, image: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80' },
-  { crop: 'Organic Tur Dal', farmer: 'Savitri Devi', location: 'Indore, Madhya Pradesh', grade: 'Organic', qty: '85 Q', price: '₹8,100', bid: '₹8,350', safe: true, image: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=600&q=80' },
-  { crop: 'Fresh Red Onion', farmer: 'Anil Jadhav', location: 'Pune, Maharashtra', grade: 'A', qty: '520 Q', price: '₹2,780', bid: '₹2,920', safe: false, image: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=600&q=80' },
+const FALLBACK_LOTS: CropLot[] = [
+  { id: 'mock-1', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik, Maharashtra', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Ramesh Patil', created_at: '' } },
+  { id: 'mock-2', farmer_id: 'f2', crop_name: 'Organic Tur Dal', grade: 'Organic', quantity_quintal: 85, asking_price_per_quintal: 8100, location: 'Indore, Madhya Pradesh', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f2', email: '', role: 'farmer', full_name: 'Savitri Devi', created_at: '' } },
+  { id: 'mock-3', farmer_id: 'f3', crop_name: 'Fresh Red Onion', grade: 'A', quantity_quintal: 520, asking_price_per_quintal: 2780, location: 'Pune, Maharashtra', pesticide_safe_flag: false, needs_transport: true, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f3', email: '', role: 'farmer', full_name: 'Anil Jadhav', created_at: '' } },
 ]
 
 const farmerNavGroups = [{ label: 'Farmer Desk', items: farmerNavItems }]
@@ -39,8 +42,47 @@ function Metric({ icon: Icon, label, value, detail, tone = 'teal' }: { icon: typ
   return <div className="metric-card"><div className={`metric-icon ${tone}`}><Icon className="size-5" /></div><div className="min-w-0"><p className="text-xs font-medium text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tracking-tight text-foreground">{value}</p><p className="mt-1 text-[11px] text-muted-foreground">{detail}</p></div></div>
 }
 
-function ListingCard({ lot, onOffer }: { lot: typeof lots[number], onOffer: () => void }) {
-  return <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><div className="relative h-36 overflow-hidden bg-secondary"><img src={lot.image} alt={lot.crop} className="size-full object-cover" /><div className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-bold text-foreground">Grade {lot.grade}</div>{lot.safe && <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground"><ShieldCheck className="size-3" /> Safe</div>}</div><div className="flex flex-col gap-3 p-4"><div><h3 className="font-semibold text-foreground">{lot.crop}</h3><p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" />{lot.location}</p></div><div className="flex items-end justify-between"><div><p className="text-[11px] text-muted-foreground">Highest bid</p><p className="text-lg font-bold text-primary">{lot.bid}<span className="ml-1 text-xs font-normal text-muted-foreground">/ Q</span></p></div><p className="text-right text-xs text-muted-foreground">{lot.qty}<br />by {lot.farmer}</p></div><button onClick={onOffer} className="flex h-10 items-center justify-center gap-2 rounded-xl bg-secondary text-sm font-bold text-foreground transition hover:bg-primary hover:text-primary-foreground">Make an offer <ArrowRight className="size-4" /></button></div></article>
+function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) => void }) {
+  const cropImage = lot.image_url || 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80'
+  return (
+    <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative h-36 overflow-hidden bg-secondary">
+        <img src={cropImage} alt={lot.crop_name} className="size-full object-cover" />
+        <div className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-bold text-foreground">
+          Grade {lot.grade}
+        </div>
+        {lot.pesticide_safe_flag && (
+          <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+            <ShieldCheck className="size-3" /> Safe
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 p-4">
+        <div>
+          <h3 className="font-semibold text-foreground">{lot.crop_name}</h3>
+          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="size-3" />{lot.location}
+          </p>
+        </div>
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[11px] text-muted-foreground">Asking price</p>
+            <p className="text-lg font-bold text-primary">
+              ₹{lot.asking_price_per_quintal.toLocaleString('en-IN')}
+              <span className="ml-1 text-xs font-normal text-muted-foreground">/ Q</span>
+            </p>
+          </div>
+          <p className="text-right text-xs text-muted-foreground">
+            {lot.quantity_quintal} Q<br />
+            by {lot.farmer?.full_name ?? 'Farmer'}
+          </p>
+        </div>
+        <button onClick={() => onOffer(lot)} className="flex h-10 items-center justify-center gap-2 rounded-xl bg-secondary text-sm font-bold text-foreground transition hover:bg-primary hover:text-primary-foreground">
+          Make an offer <ArrowRight className="size-4" />
+        </button>
+      </div>
+    </article>
+  )
 }
 
 function Login({ onEnter }: { onEnter: (role: 'farmer' | 'buyer') => void }) {
@@ -57,16 +99,21 @@ function FarmerSidebar({ tab, onNavigate, profilePhoto, userName, onLogout }: { 
 function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: () => void }) {
   const router = useRouter()
   const [tab, setTab] = useState('Overview')
-  const [hasNotification, setHasNotification] = useState(true)
-  const [notificationPopped, setNotificationPopped] = useState(true)
+  const [hasNotification, setHasNotification] = useState(false)
+  const [notificationPopped, setNotificationPopped] = useState(false)
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [notifOpen, setNotifOpen] = useState(false)
   const [publishStatus, setPublishStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [publishError, setPublishError] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
   const [toast, setToast] = useState('')
   const [offerOpen, setOfferOpen] = useState(false)
+  const [selectedLot, setSelectedLot] = useState<CropLot | null>(null)
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null)
   const [cropPhoto, setCropPhoto] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [liveLots, setLiveLots] = useState<CropLot[]>(FALLBACK_LOTS)
+  const [loadingLots, setLoadingLots] = useState(true)
   const [recentBids, setRecentBids] = useState([{name:'GreenField Foods', place:'Mumbai · 48 min ago', bid:'₹3,560', delta:'+4.1%'},{name:'Harvest Hub', place:'Pune · 2 hrs ago', bid:'₹3,510', delta:'+2.6%'},{name:'Bharat Grains Co.', place:'Nashik · 4 hrs ago', bid:'₹3,480', delta:'+1.8%'}])
 
   useEffect(() => {
@@ -75,6 +122,39 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
       return () => clearTimeout(timer)
     }
   }, [toast])
+
+  useEffect(() => {
+    async function fetchNotifs() {
+      const res = await getNotificationsForUser()
+      if (res.data && res.data.length > 0) {
+        setNotifications(res.data)
+        const unread = res.data.some((n) => !n.is_read)
+        setHasNotification(unread)
+        if (unread) setNotificationPopped(true)
+      } else {
+        setNotifications([])
+        setHasNotification(false)
+      }
+    }
+    fetchNotifs()
+    const interval = setInterval(fetchNotifs, 10000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadCrops = useCallback(async () => {
+    setLoadingLots(true)
+    const result = await getActiveCrops()
+    if (result.data && result.data.length > 0) {
+      setLiveLots(result.data as CropLot[])
+    } else if (result.data) {
+      setLiveLots([])
+    }
+    setLoadingLots(false)
+  }, [])
+
+  useEffect(() => {
+    loadCrops()
+  }, [loadCrops])
 
   useEffect(() => {
     async function fetchRecent() {
@@ -124,13 +204,13 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
       })
 
       if (result.error) {
-        // Graceful fallback for unconfigured Supabase
+        // Graceful fallback for unconfigured Supabase or demo mode
         if (result.error.includes('fetch') || result.error.includes('URL') || result.error.includes('authenticated')) {
           setPublishStatus('success')
           setToast('Crop successfully published to marketplace!')
           setCropPhoto(null)
+          await loadCrops()
           setTimeout(() => setPublishStatus('idle'), 3000)
-          router.push('/')
           return
         }
         setPublishError(result.error)
@@ -141,8 +221,8 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
       setPublishStatus('success')
       setToast('Crop successfully published to marketplace!')
       setCropPhoto(null)
+      await loadCrops() // Instantly refresh the UI feed
       setTimeout(() => setPublishStatus('idle'), 3000)
-      router.push('/')
     } catch (err: any) {
       setPublishError(err?.message || 'An unexpected error occurred.')
       setPublishStatus('error')
@@ -181,14 +261,48 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => { setHasNotification(false); setNotificationPopped(false) }}
-            aria-label={hasNotification ? 'View new notifications' : 'Notifications'}
-            className={`notification-button icon-button ${notificationPopped ? 'notification-pop' : ''}`}
-          >
-            <Bell className="size-5" />
-            {hasNotification && <span className="notification-dot" aria-label="New notification" />}
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => { setNotifOpen(!notifOpen); setHasNotification(false); setNotificationPopped(false) }}
+              aria-label={hasNotification ? 'View new notifications' : 'Notifications'}
+              className={`notification-button icon-button ${notificationPopped ? 'notification-pop' : ''}`}
+            >
+              <Bell className="size-5" />
+              {hasNotification && <span className="notification-dot" aria-label="New notification" />}
+            </button>
+            {notifOpen && (
+              <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-border bg-card p-4 shadow-xl animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Farmer Notifications</p>
+                  <button onClick={() => setNotifOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+                </div>
+                <div className="mt-2 max-h-64 overflow-y-auto space-y-2">
+                  {notifications.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-4 text-center">No new notifications</p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={async () => {
+                          await markNotificationRead(n.id)
+                          setNotifications((curr) => curr.map((item) => item.id === n.id ? { ...item, is_read: true } : item))
+                          setNotifOpen(false)
+                          setTab('Market & Bids')
+                        }}
+                        className={`cursor-pointer rounded-xl p-2.5 text-xs transition-colors ${n.is_read ? 'bg-secondary/40 text-muted-foreground' : 'bg-primary/10 text-foreground font-semibold border border-primary/20'}`}
+                      >
+                        <p>{n.message}</p>
+                        <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
+                          <span>{new Date(n.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-primary font-bold">View Bids →</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <Language />
           <FarmerProfileMenu profilePhoto={profilePhoto} userName={userName} onPhotoChange={setProfilePhoto} onLogout={onLogout} />
           <button onClick={() => setMobileMenuOpen(true)} aria-label="Open navigation menu" aria-expanded={mobileMenuOpen} className="icon-button md:hidden">
@@ -376,31 +490,44 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                 <p className="eyebrow">Marketplace</p>
                 <h2 className="panel-title">What&apos;s moving near you</h2>
               </div>
-              <button className="secondary-button"><Search className="size-4" /> Browse lots</button>
+              <button onClick={() => setTab('Market & Bids')} className="secondary-button"><Search className="size-4" /> Browse lots</button>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {lots.map((lot) => <ListingCard key={lot.crop} lot={lot} onOffer={() => setOfferOpen(true)} />)}
-            </div>
+            {loadingLots ? (
+              <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" /> Loading marketplace…
+              </div>
+            ) : liveLots.length === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
+                No active listings found in database. Add a crop above to create a listing.
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {liveLots.map((lot) => (
+                  <ListingCard key={lot.id} lot={lot} onOffer={(l) => { setSelectedLot(l); setOfferOpen(true) }} />
+                ))}
+              </div>
+            )}
           </section>
         </main>
       </div>
-      {offerOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-card">
+      {offerOpen && selectedLot && (
+        <div className="modal-backdrop" onClick={() => setOfferOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setOfferOpen(false)} className="absolute right-4 top-4 text-muted-foreground">
               <X className="size-5" />
             </button>
             <p className="eyebrow">Make an offer</p>
-            <h2 className="mt-2 font-serif text-2xl font-bold">Bid on this crop lot</h2>
+            <h2 className="mt-2 font-serif text-2xl font-bold">Bid on {selectedLot.crop_name}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Asking: ₹{selectedLot.asking_price_per_quintal.toLocaleString('en-IN')} / Q · {selectedLot.quantity_quintal} Q available</p>
             <label className="field mt-6">
               <span>Your bid price (₹ / Quintal)</span>
-              <input defaultValue="3600" />
+              <input defaultValue={selectedLot.asking_price_per_quintal} />
             </label>
             <label className="field mt-4">
               <span>Preferred delivery date</span>
               <input type="date" defaultValue="2026-09-12" />
             </label>
-            <button onClick={() => setOfferOpen(false)} className="primary-button mt-6 w-full">
+            <button onClick={() => { setOfferOpen(false); setToast('Offer submitted successfully!') }} className="primary-button mt-6 w-full">
               Submit offer <ArrowRight className="size-4" />
             </button>
           </div>
@@ -410,4 +537,100 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
   )
 }
 
-export default function KrishiMitraApp() { const [role, setRole] = useState<'login' | 'farmer' | 'buyer'>('login'); const [userName, setUserName] = useState<string>('Farmer'); const [buyerProfile, setBuyerProfile] = useState(false); const [buyerBids, setBuyerBids] = useState(false); const [search, setSearch] = useState(''); const visibleLots = useMemo(() => lots.filter((l) => l.crop.toLowerCase().includes(search.toLowerCase())), [search]); if (role === 'login') return <LoginScreen onEnter={(r, name) => { setRole(r); if(name) setUserName(name); }} />; if (role === 'farmer') return <FarmerDashboard userName={userName} onLogout={() => setRole('login')} />; if (role === 'buyer') { const logout = () => { setBuyerProfile(false); setBuyerBids(false); setRole('login') }; if (buyerProfile) return <BuyerProfileScreen onBack={() => setBuyerProfile(false)} onLogout={logout} />; if (buyerBids) return <MyBidsScreen onBack={() => setBuyerBids(false)} onLogout={logout} />; return <BuyerDashboardScreen userName={userName} onLogout={logout} onProfile={() => setBuyerProfile(true)} onMyBids={() => setBuyerBids(true)} />; } return <div className="min-h-screen bg-background"><header className="topbar"><Brand /><div className="flex items-center gap-3"><Language /><button onClick={() => setRole('login')} className="secondary-button">Logout</button></div></header><main className="dashboard-main mx-auto max-w-6xl"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="eyebrow">Buyer marketplace</p><h1 className="mt-2 text-3xl font-bold">Source with confidence.</h1><p className="mt-2 text-sm text-muted-foreground">Verified crop lots, transparent bids, direct farmer relationships.</p></div><div className="relative"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input value={search} onChange={(e) => setSearch(e.target.value)} className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-ring sm:w-64" placeholder="Find crop lots" /></div></div><div className="mt-7 grid gap-4 md:grid-cols-3"><Metric icon={Package} label="Available lots" value="128" detail="Across 7 regions" /><Metric icon={ShieldCheck} label="Verified-safe lots" value="84" detail="Lab declarations visible" tone="green" /><Metric icon={IndianRupee} label="Market movement" value="+6.2%" detail="Basmati this week" tone="gold" /></div><div className="mt-8 flex items-center gap-3 border-b border-border pb-3"><button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Buy product & place bids</button><button onClick={() => window.alert('Select a crop lot below to make your offer.')} className="rounded-xl border border-primary px-4 py-2 text-sm font-bold text-primary transition hover:bg-secondary">Make an offer</button><button className="rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-secondary">Trending market</button></div><div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{visibleLots.map((lot) => <ListingCard key={lot.crop} lot={lot} onOffer={() => {}} />)}</div></main></div> }
+export default function KrishiMitraApp() {
+  const [role, setRole] = useState<'login' | 'farmer' | 'buyer'>('login')
+  const [userName, setUserName] = useState<string>('Farmer')
+  const [buyerProfile, setBuyerProfile] = useState(false)
+  const [buyerBids, setBuyerBids] = useState(false)
+  const [search, setSearch] = useState('')
+  const [allLots, setAllLots] = useState<CropLot[]>(FALLBACK_LOTS)
+
+  useEffect(() => {
+    // 1. Check URL query parameters for immediate role sync
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const roleParam = params.get('role') as 'farmer' | 'buyer' | null
+      const nameParam = params.get('name')
+      if (roleParam === 'farmer' || roleParam === 'buyer') {
+        setRole(roleParam)
+        if (nameParam) setUserName(nameParam)
+        window.history.replaceState({}, '', window.location.pathname)
+        return
+      }
+    }
+
+    // 2. Check Supabase session
+    async function checkAuth() {
+      const session = await getSession()
+      if (session.role === 'farmer' || session.role === 'buyer') {
+        setRole(session.role)
+        if (session.fullName) setUserName(session.fullName)
+      }
+    }
+    checkAuth()
+
+    async function fetchAll() {
+      const result = await getActiveCrops()
+      if (result.data && result.data.length > 0) {
+        setAllLots(result.data as CropLot[])
+      }
+    }
+    fetchAll()
+  }, [])
+
+  const visibleLots = useMemo(
+    () => allLots.filter((l) => l.crop_name.toLowerCase().includes(search.toLowerCase()) || l.location.toLowerCase().includes(search.toLowerCase())),
+    [allLots, search]
+  )
+
+  const handleLogout = async () => {
+    await signOut()
+    setBuyerProfile(false)
+    setBuyerBids(false)
+    setRole('login')
+  }
+
+  if (role === 'login') return <LoginScreen onEnter={(r, name) => { setRole(r); if (name) setUserName(name); }} />
+  if (role === 'farmer') return <FarmerDashboard userName={userName} onLogout={handleLogout} />
+  if (role === 'buyer') {
+    return <BuyerDashboardScreen userName={userName} onLogout={handleLogout} onProfile={() => setBuyerProfile(true)} onMyBids={() => setBuyerBids(true)} />
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="topbar">
+        <Brand />
+        <div className="flex items-center gap-3">
+          <Language />
+          <button onClick={() => setRole('login')} className="secondary-button">Logout</button>
+        </div>
+      </header>
+      <main className="dashboard-main mx-auto max-w-6xl">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p className="eyebrow">Buyer marketplace</p>
+            <h1 className="mt-2 text-3xl font-bold">Source with confidence.</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Verified crop lots, transparent bids, direct farmer relationships.</p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-ring sm:w-64" placeholder="Find crop lots" />
+          </div>
+        </div>
+        <div className="mt-7 grid gap-4 md:grid-cols-3">
+          <Metric icon={Package} label="Available lots" value={String(allLots.length)} detail="Live from Supabase" />
+          <Metric icon={ShieldCheck} label="Verified-safe lots" value={String(allLots.filter(l => l.pesticide_safe_flag).length)} detail="Lab declarations visible" tone="green" />
+          <Metric icon={IndianRupee} label="Market movement" value="+6.2%" detail="Real-time data" tone="gold" />
+        </div>
+        <div className="mt-8 flex items-center gap-3 border-b border-border pb-3">
+          <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Buy product &amp; place bids</button>
+          <button onClick={() => window.alert('Select a crop lot below to make your offer.')} className="rounded-xl border border-primary px-4 py-2 text-sm font-bold text-primary transition hover:bg-secondary">Make an offer</button>
+          <button className="rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-secondary">Trending market</button>
+        </div>
+        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {visibleLots.map((lot) => <ListingCard key={lot.id} lot={lot} onOffer={() => {}} />)}
+        </div>
+      </main>
+    </div>
+  )
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, CreditCard, Loader2, XCircle } from 'lucide-react'
 import { getBidsForBuyer, markBidPaid, updateBidStatus } from '@/lib/actions/bid-actions'
 import type { Bid } from '@/types/database'
@@ -9,9 +9,9 @@ type Props = { onBack: () => void; onLogout: () => void }
 
 // Fallback mock data for demo mode
 const MOCK_BIDS: Bid[] = [
-  { id: 'mock-b1', lot_id: 'l1', buyer_id: 'u1', bid_price_per_quintal: 3580, status: 'pending', preferred_delivery_date: '2026-09-12', created_at: '', updated_at: '', lot: { id: 'l1', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Ramesh Patil', created_at: '' } } },
-  { id: 'mock-b2', lot_id: 'l2', buyer_id: 'u1', bid_price_per_quintal: 8400, status: 'accepted', preferred_delivery_date: '2026-09-18', created_at: '', updated_at: '', lot: { id: 'l2', farmer_id: 'f2', crop_name: 'Organic Tur Dal', grade: 'Organic', quantity_quintal: 85, asking_price_per_quintal: 8100, location: 'Indore', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', farmer: { id: 'f2', email: '', role: 'farmer', full_name: 'Savitri Devi', created_at: '' } } },
-  { id: 'mock-b3', lot_id: 'l3', buyer_id: 'u1', bid_price_per_quintal: 2950, status: 'counter', counter_price: 3020, preferred_delivery_date: '2026-09-10', created_at: '', updated_at: '', lot: { id: 'l3', farmer_id: 'f3', crop_name: 'Fresh Red Onion', grade: 'A', quantity_quintal: 520, asking_price_per_quintal: 2780, location: 'Pune', pesticide_safe_flag: false, needs_transport: true, is_live: true, created_at: '', updated_at: '', farmer: { id: 'f3', email: '', role: 'farmer', full_name: 'Anil Jadhav', created_at: '' } } },
+  { id: 'mock-b1', lot_id: 'l1', buyer_id: 'u1', bid_price_per_kg: 35.8, total_bid_amount: 859200, bid_price_per_quintal: 3580, status: 'pending', preferred_delivery_date: '2026-09-12', created_at: '', lot: { id: 'l1', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Ramesh Patil', created_at: '' } } },
+  { id: 'mock-b2', lot_id: 'l2', buyer_id: 'u1', bid_price_per_kg: 84.0, total_bid_amount: 714000, bid_price_per_quintal: 8400, status: 'accepted', preferred_delivery_date: '2026-09-18', created_at: '', lot: { id: 'l2', farmer_id: 'f2', crop_name: 'Organic Tur Dal', grade: 'Organic', quantity_quintal: 85, asking_price_per_quintal: 8100, location: 'Indore', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', farmer: { id: 'f2', email: '', role: 'farmer', full_name: 'Savitri Devi', created_at: '' } } },
+  { id: 'mock-b3', lot_id: 'l3', buyer_id: 'u1', bid_price_per_kg: 29.5, total_bid_amount: 1534000, bid_price_per_quintal: 2950, status: 'counter', counter_price: 3020, preferred_delivery_date: '2026-09-10', created_at: '', lot: { id: 'l3', farmer_id: 'f3', crop_name: 'Fresh Red Onion', grade: 'A', quantity_quintal: 520, asking_price_per_quintal: 2780, location: 'Pune', pesticide_safe_flag: false, needs_transport: true, is_live: true, created_at: '', updated_at: '', farmer: { id: 'f3', email: '', role: 'farmer', full_name: 'Anil Jadhav', created_at: '' } } },
 ]
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -44,7 +44,7 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
   async function handleAcceptCounter(bid: Bid) {
     setIsSubmitting(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await updateBidStatus(bid.id, 'accepted')
       setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : b))
     } finally {
       setIsSubmitting(false)
@@ -54,7 +54,7 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
   async function handleDeclineCounter(bid: Bid) {
     setIsSubmitting(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await updateBidStatus(bid.id, 'rejected')
       setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
     } finally {
       setIsSubmitting(false)
@@ -68,7 +68,7 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
   async function confirmPayment(bid: Bid) {
     setIsSubmitting(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await markBidPaid(bid.id)
       setPaidIds((current) => [...current, bid.id])
       setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'paid' } : b))
       setPaymentModal(null)
@@ -93,7 +93,10 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
           <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Loading your bids…</div>
         ) : (
           <section className="my-bids-list">
-            {bids.map((bid) => (
+            {bids.map((bid) => {
+              const pricePerKg = bid.bid_price_per_kg ? Number(bid.bid_price_per_kg) : ((bid.bid_price_per_quintal || 0) / 100)
+              const totalAmount = bid.total_bid_amount ? Number(bid.total_bid_amount) : (pricePerKg * (bid.lot?.quantity_quintal || 1) * 100)
+              return (
               <article className="my-bid-card" key={bid.id}>
                 <div className="my-bid-heading">
                   <div>
@@ -107,9 +110,9 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
                 </div>
 
                 <div className="my-bid-details">
-                  <span>Your offer<strong>₹{bid.bid_price_per_quintal.toLocaleString('en-IN')} / Q</strong></span>
-                  <span>Quantity<strong>{bid.quantity_requested || bid.lot?.quantity_quintal} Q</strong></span>
-                  {bid.preferred_delivery_date && <span>Delivery<strong>{new Date(bid.preferred_delivery_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></span>}
+                  <span>Your offer<strong>₹{pricePerKg.toFixed(2)} / kg (₹{(pricePerKg * 100).toLocaleString('en-IN')}/Q)</strong></span>
+                  <span>Quantity<strong>{bid.lot?.quantity_quintal} Q ({Number(bid.lot?.quantity_quintal || 1) * 100} kg)</strong></span>
+                  <span>Total Amount<strong>₹{totalAmount.toLocaleString('en-IN')}</strong></span>
                 </div>
                 {bid.buyer_notes && <p className="mt-3 text-sm text-muted-foreground italic">&ldquo;{bid.buyer_notes}&rdquo;</p>}
 
@@ -133,7 +136,7 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
                   </div>
                 )}
               </article>
-            ))}
+            )})}
           </section>
         )}
       </main>
@@ -146,14 +149,14 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
             <h2 className="mt-2 font-serif text-2xl font-bold">Confirm Payment</h2>
             <div className="mt-5 rounded-2xl bg-secondary p-4 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Crop</span><strong>{paymentModal.lot?.crop_name}</strong></div>
-              <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Bid price</span><strong>₹{paymentModal.bid_price_per_quintal.toLocaleString('en-IN')} / Q</strong></div>
-              <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Quantity</span><strong>{paymentModal.quantity_requested || paymentModal.lot?.quantity_quintal} Q</strong></div>
+              <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Bid price</span><strong>₹{Number(paymentModal.bid_price_per_kg || ((paymentModal.bid_price_per_quintal || 0) / 100)).toFixed(2)} / kg</strong></div>
+              <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Quantity</span><strong>{paymentModal.lot?.quantity_quintal} Q ({Number(paymentModal.lot?.quantity_quintal || 1) * 100} kg)</strong></div>
               <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold">
                 <span>Total</span>
-                <span className="text-primary">₹{((paymentModal.bid_price_per_quintal) * ((paymentModal.quantity_requested || paymentModal.lot?.quantity_quintal) ?? 1)).toLocaleString('en-IN')}</span>
+                <span className="text-primary">₹{Number(paymentModal.total_bid_amount || ((paymentModal.bid_price_per_kg || 0) * (paymentModal.lot?.quantity_quintal || 1) * 100)).toLocaleString('en-IN')}</span>
               </div>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">This is a mock checkout. No real payment will be processed.</p>
+            <p className="mt-3 text-xs text-muted-foreground">This is a demo checkout. Your payment status will be updated in Supabase.</p>
             <div className="mt-5 flex gap-3">
               <button onClick={() => setPaymentModal(null)} className="secondary-button flex-1">Cancel</button>
               <button onClick={() => confirmPayment(paymentModal)} disabled={isSubmitting} className="primary-button flex-1">

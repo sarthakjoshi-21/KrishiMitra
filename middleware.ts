@@ -26,19 +26,22 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const { pathname } = request.nextUrl
+
+  // Explicitly allow public pages and API routes without interception
+  const publicRoutes = ['/', '/farmer-login', '/buyer-login']
+  if (publicRoutes.includes(pathname) || pathname.startsWith('/api/')) {
+    return supabaseResponse
+  }
+
   // Refresh session (required for SSR auth to work correctly)
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
-
-  // Protected routes that require auth
-  const farmerPaths = ['/farmer']
-  const buyerPaths = ['/buyer']
-
-  const isFarmerRoute = farmerPaths.some((p) => pathname.startsWith(p))
-  const isBuyerRoute = buyerPaths.some((p) => pathname.startsWith(p))
+  // Protected routes that require auth (exact match or subdirectory, not matching /farmer-login or /buyer-login)
+  const isFarmerRoute = pathname === '/farmer' || pathname.startsWith('/farmer/')
+  const isBuyerRoute = pathname === '/buyer' || pathname.startsWith('/buyer/')
 
   if (!user && (isFarmerRoute || isBuyerRoute)) {
     const loginUrl = request.nextUrl.clone()
@@ -59,14 +62,14 @@ export async function middleware(request: NextRequest) {
     // Role-based guard: farmer tries to access buyer route → redirect
     if (role === 'farmer' && isBuyerRoute) {
       const redirect = request.nextUrl.clone()
-      redirect.pathname = '/farmer/dashboard'
+      redirect.pathname = '/'
       return NextResponse.redirect(redirect)
     }
 
     // Role-based guard: buyer tries to access farmer route → redirect
     if (role === 'buyer' && isFarmerRoute) {
       const redirect = request.nextUrl.clone()
-      redirect.pathname = '/buyer/dashboard'
+      redirect.pathname = '/'
       return NextResponse.redirect(redirect)
     }
   }

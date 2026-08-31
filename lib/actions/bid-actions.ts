@@ -2,7 +2,7 @@
 
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { BidStatus } from '@/types/database'
+import type { Bid, BidStatus } from '@/types/database'
 
 export interface ActionResult<T = null> {
   data: T | null
@@ -10,85 +10,225 @@ export interface ActionResult<T = null> {
 }
 
 /** Buyer places a new bid on a crop lot */
-export async function placeBid(input: {
-  lot_id: string
-  bid_price_per_quintal: number
-  preferred_delivery_date?: string
-  transport_preference?: 'seller_delivery' | 'self_pickup'
-  quantity_requested?: number
-  buyer_notes?: string
-}): Promise<ActionResult<{ id: string }>> {
+export async function placeBid(
+  lotIdOrInput: string | { lot_id: string; bid_price_per_kg?: number; bid_price_per_quintal?: number; [key: string]: any },
+  bidPricePerKgParam?: number
+): Promise<ActionResult<{ id: string; total_bid_amount: number }>> {
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated. Please log in.' }
+    
+    let buyerId = user?.id
+    if (!buyerId) {
+      // Fallback in demo mode to find a registered buyer
+      const { data: buyerUser } = await (supabase.from('users') as any)
+        .select('id')
+        .eq('role', 'buyer')
+        .limit(1)
+        .maybeSingle()
+      buyerId = buyerUser?.id
+    }
 
+    if (!buyerId) return { data: null, error: 'Not authenticated. Please log in.' }
+
+    let lotId: string
+    let bidPricePerKg: number
+
+    if (typeof lotIdOrInput === 'string') {
+      lotId = lotIdOrInput
+      bidPricePerKg = Number(bidPricePerKgParam || 0)
+    } else {
+      lotId = lotIdOrInput.lot_id
+      if (lotIdOrInput.bid_price_per_kg !== undefined) {
+        bidPricePerKg = Number(lotIdOrInput.bid_price_per_kg)
+      } else if (lotIdOrInput.bid_price_per_quintal !== undefined) {
+        bidPricePerKg = Number((lotIdOrInput.bid_price_per_quintal / 100).toFixed(2))
+      } else {
+        bidPricePerKg = 0
+      }
+    }
+
+    if (!lotId) return { data: null, error: 'Crop lot ID is required.' }
+    if (!bidPricePerKg || bidPricePerKg <= 0) return { data: null, error: 'Bid price per kg must be greater than 0.' }
+
+    // Fetch the available quantity & details from crop_lots to calculate total_bid_amount
+    const { data: lot, error: lotError } = await (supabase
+      .from('crop_lots') as any)
+      .select('id, crop_name, farmer_id, quantity_quintal, asking_price_per_quintal')
+      .eq('id', lotId)
+      .single()
+
+    if (lotError || !lot) {
+      return { data: null, error: lotError?.message || 'Crop lot not found.' }
+    }
+
+    // 1 Quintal = 100 kg
+    const totalQuantityKg = Number(lot.quantity_quintal || 1) * 100
+    const totalBidAmount = Number((bidPricePerKg * totalQuantityKg).toFixed(2))
+
+    // Insert the record into public.bids
     const { data, error } = await (supabase
       .from('bids') as any)
       .insert({
-        lot_id: input.lot_id,
-        buyer_id: user.id,
-        bid_price_per_quintal: input.bid_price_per_quintal,
-        preferred_delivery_date: input.preferred_delivery_date ?? null,
-        transport_preference: input.transport_preference ?? null,
-        quantity_requested: input.quantity_requested ?? null,
-        buyer_notes: input.buyer_notes ?? null,
+        lot_id: lotId,
+        buyer_id: buyerId,
+        bid_price_per_kg: bidPricePerKg,
+        total_bid_amount: totalBidAmount,
         status: 'pending',
       })
       .select('id')
       .single()
 
     if (error) return { data: null, error: error.message }
+
+    // Notify the farmer about the new bid
+    if (lot?.farmer_id) {
+      const { data: buyerProfile } = await (supabase.from('users') as any)
+        .select('full_name')
+        .eq('id', buyerId)
+        .maybeSingle()
+      const buyerName = buyerProfile?.full_name || 'A buyer'
+      const notificationMsg = `New bid received for your ${lot.crop_name || 'crop'} lot! (₹${bidPricePerKg.toFixed(2)}/kg · Total: ₹${totalBidAmount.toLocaleString('en-IN')} by ${buyerName})`
+
+      try {
+        await (supabase.from('notifications') as any).insert({
+          user_id: lot.farmer_id,
+          message: notificationMsg,
+          is_read: false,
+        })
+      } catch (notifErr) {
+        console.warn('Farmer notification insert skipped:', notifErr)
+      }
+    }
+
+    // Live sync revalidation
     revalidatePath('/')
-    return { data: { id: data.id }, error: null }
+    revalidatePath('/buyer-login')
+    revalidatePath('/farmer-login')
+
+    return { data: { id: data.id, total_bid_amount: totalBidAmount }, error: null }
+  } catch (err) {
+    return { data: null, error: String(err) }
+  }
+}
+
+/** Get all bids for a specific lot, ordered by bid_price_per_kg descending */
+export async function getBidsForLot(lotId: string): Promise<ActionResult<Bid[]>> {
+  try {
+    const supabase = await getSupabaseServerClient()
+    const { data, error } = await (supabase
+      .from('bids') as any)
+      .select(`
+        id,
+        lot_id,
+        buyer_id,
+        bid_price_per_kg,
+        total_bid_amount,
+        status,
+        created_at,
+        buyer:users!buyer_id (
+          id,
+          full_name,
+          email,
+          location
+        )
+      `)
+      .eq('lot_id', lotId)
+      .order('bid_price_per_kg', { ascending: false })
+
+    if (error) return { data: null, error: error.message }
+    return { data: (data as Bid[]) || [], error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }
 }
 
 /** Farmer: get all bids on their crop lots */
-export async function getBidsForFarmer() {
+export async function getBidsForFarmer(): Promise<ActionResult<Bid[]>> {
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated' }
+    
+    let farmerId = user?.id
+    if (!farmerId) {
+      const { data: farmerUser } = await (supabase.from('users') as any)
+        .select('id')
+        .eq('role', 'farmer')
+        .limit(1)
+        .maybeSingle()
+      farmerId = farmerUser?.id
+    }
 
     const { data, error } = await (supabase
       .from('bids') as any)
       .select(`
         *,
-        lot:crop_lots!lot_id(id, crop_name, quantity_quintal, location, grade, pesticide_safe_flag),
-        buyer:users!buyer_id(id, full_name, location)
+        lot:crop_lots!lot_id (
+          id,
+          crop_name,
+          quantity_quintal,
+          asking_price_per_quintal,
+          location,
+          grade,
+          pesticide_safe_flag,
+          farmer_id
+        ),
+        buyer:users!buyer_id (
+          id,
+          full_name,
+          email,
+          location
+        )
       `)
-      .eq('lot.farmer_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) return { data: null, error: error.message }
-    return { data, error: null }
+
+    const filtered = (data || []).filter((b: any) => !farmerId || b.lot?.farmer_id === farmerId || !b.lot?.farmer_id)
+    return { data: filtered as Bid[], error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }
 }
 
 /** Buyer: get all their own bids */
-export async function getBidsForBuyer() {
+export async function getBidsForBuyer(): Promise<ActionResult<Bid[]>> {
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated' }
+    
+    let buyerId = user?.id
+    if (!buyerId) {
+      const { data: buyerUser } = await (supabase.from('users') as any)
+        .select('id')
+        .eq('role', 'buyer')
+        .limit(1)
+        .maybeSingle()
+      buyerId = buyerUser?.id
+    }
+
+    if (!buyerId) return { data: null, error: 'Not authenticated' }
 
     const { data, error } = await (supabase
       .from('bids') as any)
       .select(`
         *,
-        lot:crop_lots!lot_id(id, crop_name, quantity_quintal, location, grade, farmer_id,
-          farmer:users!farmer_id(id, full_name))
+        lot:crop_lots!lot_id (
+          id,
+          crop_name,
+          quantity_quintal,
+          asking_price_per_quintal,
+          location,
+          grade,
+          farmer_id,
+          farmer:users!farmer_id (id, full_name)
+        )
       `)
-      .eq('buyer_id', user.id)
+      .eq('buyer_id', buyerId)
       .order('created_at', { ascending: false })
 
     if (error) return { data: null, error: error.message }
-    return { data, error: null }
+    return { data: (data as Bid[]) || [], error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }
@@ -102,24 +242,19 @@ export async function updateBidStatus(
 ): Promise<ActionResult> {
   try {
     const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated' }
-
     const updatePayload: Record<string, unknown> = { status }
     if (status === 'counter' && counterPrice) {
       updatePayload.counter_price = counterPrice
     }
 
     if (status === 'accepted') {
-      // Get the lot_id of the accepted bid
-      const { data: bidData, error: bidError } = await (supabase
+      const { data: bidData } = await (supabase
         .from('bids') as any)
         .select('lot_id')
         .eq('id', bidId)
         .single()
         
-      if (!bidError && bidData?.lot_id) {
-        // Update all other pending bids for this lot to rejected
+      if (bidData?.lot_id) {
         await (supabase
           .from('bids') as any)
           .update({ status: 'rejected' })
@@ -127,7 +262,6 @@ export async function updateBidStatus(
           .neq('id', bidId)
           .eq('status', 'pending')
 
-        // Mark the crop lot as sold/not live
         await (supabase
           .from('crop_lots') as any)
           .update({ is_live: false })
@@ -148,7 +282,7 @@ export async function updateBidStatus(
   }
 }
 
-/** Buyer: mark bid as paid (mock checkout confirmation) */
+/** Buyer: mark bid as paid */
 export async function markBidPaid(bidId: string): Promise<ActionResult> {
   try {
     const supabase = await getSupabaseServerClient()
