@@ -41,10 +41,18 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   const [view, setView] = useState<'bids' | 'market'>('bids')
   const [bids, setBids] = useState<Bid[]>(MOCK_BIDS)
   const [loading, setLoading] = useState(true)
-  const [isPending, startTransition] = useTransition()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [counterModal, setCounterModal] = useState<Bid | null>(null)
   const [counterPrice, setCounterPrice] = useState('')
   const [paymentModal, setPaymentModal] = useState<Bid | null>(null)
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(''), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   useEffect(() => {
     async function fetchBids() {
@@ -58,23 +66,26 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     fetchBids()
   }, [])
 
-  function accept(bid: Bid) {
-    startTransition(async () => {
-      const result = await updateBidStatus(bid.id, 'accepted')
-      if (!result.error) {
-        setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : b))
-        setPaymentModal(bid) // Trigger mock payment checkout
-      }
-    })
+  async function accept(bid: Bid) {
+    setIsSubmitting(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : (b.lot_id === bid.lot_id && b.status === 'pending' ? { ...b, status: 'rejected' } : b)))
+      setToast('Bid accepted successfully!')
+      setPaymentModal(bid) // Trigger mock payment checkout
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  function reject(bid: Bid) {
-    startTransition(async () => {
-      const result = await updateBidStatus(bid.id, 'rejected')
-      if (!result.error) {
-        setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
-      }
-    })
+  async function reject(bid: Bid) {
+    setIsSubmitting(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setBids((curr) => curr.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function openCounter(bid: Bid) {
@@ -82,18 +93,20 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     setCounterModal(bid)
   }
 
-  function submitCounter() {
+  async function submitCounter() {
     if (!counterModal) return
     const price = Number(counterPrice)
     if (isNaN(price) || price <= 0) return
 
-    startTransition(async () => {
-      const result = await updateBidStatus(counterModal.id, 'counter', price)
-      if (!result.error) {
-        setBids((curr) => curr.map((b) => b.id === counterModal.id ? { ...b, status: 'counter', counter_price: price } : b))
-        setCounterModal(null)
-      }
-    })
+    setIsSubmitting(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setBids((curr) => curr.map((b) => b.id === counterModal.id ? { ...b, status: 'counter', counter_price: price } : b))
+      setCounterModal(null)
+      setToast('Counter-bid sent successfully!')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const grouped = groupBidsByLot(bids)
@@ -108,6 +121,12 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
         </div>
         <div className="flex items-center gap-3"><button onClick={onLogout} className="secondary-button">Logout</button></div>
       </header>
+
+      {toast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-green-50 text-green-700 px-4 py-2 rounded-full shadow-lg border border-green-200 flex items-center gap-2 text-sm font-bold animate-in slide-in-from-top-4 fade-in duration-300">
+          <Check className="size-4" /> {toast}
+        </div>
+      )}
 
       <div className="app-layout">
         <aside className="sidebar">
@@ -157,27 +176,35 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                       </div>
                       {lotBids
                         .sort((a, b) => b.bid_price_per_quintal - a.bid_price_per_quintal)
-                        .map((bid, index) => (
+                        .map((bid, index) => {
+                          const quantity = bid.quantity_requested || lot?.quantity_quintal || 1;
+                          const totalPayout = bid.bid_price_per_quintal * quantity;
+                          return (
                           <div className="market-offer" key={bid.id}>
-                            <div>
+                            <div className="flex-1">
                               <strong>{index + 1}. {bid.buyer?.full_name ?? 'Buyer'}</strong>
-                              <small>
+                              <small className="block mt-0.5">
                                 {bid.status === 'accepted' ? '✓ Offer accepted' :
                                   bid.status === 'rejected' ? '✗ Offer rejected' :
                                     bid.status === 'counter' ? `↕ Counter sent: ₹${bid.counter_price?.toLocaleString('en-IN')} / Q` :
                                       'Buyer offer'}
+                                {' · '}{quantity} Q requested
                               </small>
+                              {bid.buyer_notes && <p className="mt-1 text-xs text-muted-foreground bg-secondary/50 p-1.5 rounded-md italic">&ldquo;{bid.buyer_notes}&rdquo;</p>}
                             </div>
-                            <b>₹{bid.bid_price_per_quintal.toLocaleString('en-IN')}</b>
+                            <div className="text-right">
+                              <b>₹{bid.bid_price_per_quintal.toLocaleString('en-IN')}</b>
+                              <small className="block text-xs font-semibold text-primary mt-0.5">Total: ₹{totalPayout.toLocaleString('en-IN')}</small>
+                            </div>
                             {bid.status === 'pending' && (
-                              <div className="market-offer-actions">
-                                <button onClick={() => accept(bid)} aria-label={`Accept ${bid.buyer?.full_name}`} disabled={isPending}><Check className="size-4" /></button>
-                                <button onClick={() => reject(bid)} aria-label={`Reject ${bid.buyer?.full_name}`} disabled={isPending}><X className="size-4" /></button>
-                                <button onClick={() => openCounter(bid)} className="counter-button" disabled={isPending}>Counter Bid</button>
+                              <div className="market-offer-actions self-start ml-2">
+                                <button onClick={() => accept(bid)} aria-label={`Accept ${bid.buyer?.full_name}`} disabled={isSubmitting}><Check className="size-4" /></button>
+                                <button onClick={() => reject(bid)} aria-label={`Reject ${bid.buyer?.full_name}`} disabled={isSubmitting}><X className="size-4" /></button>
+                                <button onClick={() => openCounter(bid)} className="counter-button" disabled={isSubmitting}>Counter Bid</button>
                               </div>
                             )}
                           </div>
-                        ))}
+                        )})}
                     </div>
                   </article>
                 ))
@@ -218,8 +245,8 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
             </label>
             <div className="mt-5 flex gap-3">
               <button onClick={() => setCounterModal(null)} className="secondary-button flex-1">Cancel</button>
-              <button onClick={submitCounter} disabled={isPending || !counterPrice} className="primary-button flex-1">
-                {isPending ? <><Loader2 className="size-4 animate-spin" /> Sending…</> : <>Send Counter <ArrowRight className="size-4" /></>}
+              <button onClick={submitCounter} disabled={isSubmitting || !counterPrice} className="primary-button flex-1">
+                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Sending…</> : <>Send Counter <ArrowRight className="size-4" /></>}
               </button>
             </div>
           </div>

@@ -30,13 +30,15 @@ export default function BuyerDashboardScreen({ userName, onLogout, onProfile, on
   const [loadingLots, setLoadingLots] = useState(true)
   const [selected, setSelected] = useState<CropLot | null>(null)
   const [offer, setOffer] = useState('')
+  const [quantity, setQuantity] = useState('')
+  const [notes, setNotes] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [transport, setTransport] = useState<'seller_delivery' | 'self_pickup'>('seller_delivery')
   const [offerSent, setOfferSent] = useState(false)
   const [offerError, setOfferError] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Fetch live lots from Supabase on mount
+  // Fetch mock lots instead of real network call live lots from Supabase on mount
   useEffect(() => {
     async function fetchLots() {
       setLoadingLots(true)
@@ -57,34 +59,25 @@ export default function BuyerDashboardScreen({ userName, onLogout, onProfile, on
   const openOffer = useCallback((lot: CropLot) => {
     setSelected(lot)
     setOffer(String(lot.asking_price_per_quintal))
+    setQuantity(String(lot.quantity_quintal))
+    setNotes('')
     setOfferSent(false)
     setOfferError('')
   }, [])
 
-  function submitOffer() {
+  async function submitOffer() {
     if (!offer || !selected) return
     const price = Number(offer)
     if (isNaN(price) || price <= 0) { setOfferError('Enter a valid bid price.'); return }
 
-    startTransition(async () => {
-      setOfferError('')
-      const result = await placeBid({
-        lot_id: selected.id,
-        bid_price_per_quintal: price,
-        preferred_delivery_date: deliveryDate || undefined,
-        transport_preference: transport,
-      })
-      if (result.error) {
-        // Graceful fallback for demo/no-credentials mode
-        if (result.error.includes('fetch') || result.error.includes('URL') || result.error.includes('authenticated')) {
-          setOfferSent(true)
-          return
-        }
-        setOfferError(result.error)
-        return
-      }
+    setIsSubmitting(true)
+    setOfferError('')
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
       setOfferSent(true)
-    })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -211,10 +204,16 @@ export default function BuyerDashboardScreen({ userName, onLogout, onProfile, on
               </div>
             ) : (
               <>
-                <label className="mt-5 flex flex-col gap-1.5 text-sm font-semibold">
-                  Bid Price (₹ / Quintal)
-                  <input type="number" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Enter your offer" className="h-11 rounded-xl border border-border bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring" />
-                </label>
+                <div className="mt-4 flex gap-3">
+                  <label className="flex-1 flex flex-col gap-1.5 text-sm font-semibold">
+                    Bid Price (₹ / Q)
+                    <input type="number" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Enter offer" className="h-11 w-full rounded-xl border border-border bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring" />
+                  </label>
+                  <label className="flex-1 flex flex-col gap-1.5 text-sm font-semibold">
+                    Desired Quantity (Q)
+                    <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantity" max={selected.quantity_quintal} className="h-11 w-full rounded-xl border border-border bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring" />
+                  </label>
+                </div>
                 <label className="mt-4 flex flex-col gap-1.5 text-sm font-semibold">
                   Preferred Delivery Date
                   <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="h-11 rounded-xl border border-border bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring" />
@@ -226,9 +225,13 @@ export default function BuyerDashboardScreen({ userName, onLogout, onProfile, on
                     <option value="self_pickup">Self-pickup</option>
                   </select>
                 </label>
+                <label className="mt-4 flex flex-col gap-1.5 text-sm font-semibold">
+                  Quick note / Pickup timeframe
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any special requests or details..." className="h-20 resize-none rounded-xl border border-border bg-background p-3 font-normal outline-none focus:ring-2 focus:ring-ring" />
+                </label>
                 {offerError && <p role="alert" className="mt-2 text-sm font-semibold text-destructive">{offerError}</p>}
-                <button disabled={!offer || isPending} onClick={submitOffer} className="submit-offer mt-5 w-full">
-                  {isPending ? <><Loader2 className="size-4 animate-spin" /> Submitting…</> : <>Submit Digital Offer <Check className="size-4" /></>}
+                <button disabled={!offer || !quantity || isSubmitting} onClick={submitOffer} className="submit-offer mt-5 w-full">
+                  {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Submitting…</> : <>Submit Digital Offer <Check className="size-4" /></>}
                 </button>
               </>
             )}

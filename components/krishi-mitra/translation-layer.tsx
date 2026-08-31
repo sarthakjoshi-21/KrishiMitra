@@ -121,6 +121,11 @@ const supplementalTranslations: Record<string, Record<'hi' | 'mr', string>> = {
   'Mumbai · 48 min ago': { hi: 'मुंबई · 48 मिनट पहले', mr: 'मुंबई · 48 मिनिटांपूर्वी' },
   'Pune · 2 hrs ago': { hi: 'पुणे · 2 घंटे पहले', mr: 'पुणे · 2 तासांपूर्वी' },
   'Nashik · 4 hrs ago': { hi: 'नासिक · 4 घंटे पहले', mr: 'नाशिक · 4 तासांपूर्वी' },
+  'Bid Price (₹ / Q)': { hi: 'बोली मूल्य (₹ / क्विंटल)', mr: 'बोली किंमत (₹ / क्विंटल)' },
+  'Desired Quantity (Q)': { hi: 'वांछित मात्रा (क्विंटल)', mr: 'इच्छित प्रमाण (क्विंटल)' },
+  'Quantity': { hi: 'मात्रा', mr: 'प्रमाण' },
+  'Quick note / Pickup timeframe': { hi: 'त्वरित नोट / पिकअप समय', mr: 'त्वरित नोंद / पिकअप वेळ' },
+  'Bid accepted successfully!': { hi: 'बोली सफलतापूर्वक स्वीकार की गई!', mr: 'बोली यशस्वीरित्या स्वीकारली!' },
 }
 
 const originalTextNodes = new WeakMap<Text, string>()

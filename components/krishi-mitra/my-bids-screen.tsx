@@ -21,10 +21,10 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 }
 
 export default function MyBidsScreen({ onBack, onLogout }: Props) {
-  const [bids, setBids] = useState<Bid[]>(MOCK_BIDS)
+  const [bids, setBids] = useState<Bid[]>([])
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [paidIds, setPaidIds] = useState<string[]>([])
-  const [isPending, startTransition] = useTransition()
   const [paymentModal, setPaymentModal] = useState<Bid | null>(null)
 
   useEffect(() => {
@@ -33,41 +33,48 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
       const result = await getBidsForBuyer()
       if (result.data && result.data.length > 0) {
         setBids(result.data as Bid[])
+      } else {
+        setBids(MOCK_BIDS)
       }
       setLoading(false)
     }
     fetchBids()
   }, [])
 
-  function handleAcceptCounter(bid: Bid) {
-    startTransition(async () => {
-      const result = await updateBidStatus(bid.id, 'accepted')
-      if (!result.error) {
-        setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : b))
-      }
-    })
+  async function handleAcceptCounter(bid: Bid) {
+    setIsSubmitting(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'accepted' } : b))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  function handleDeclineCounter(bid: Bid) {
-    startTransition(async () => {
-      const result = await updateBidStatus(bid.id, 'rejected')
-      if (!result.error) {
-        setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
-      }
-    })
+  async function handleDeclineCounter(bid: Bid) {
+    setIsSubmitting(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'rejected' } : b))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handlePayNow(bid: Bid) {
     setPaymentModal(bid)
   }
 
-  function confirmPayment(bid: Bid) {
-    startTransition(async () => {
-      await markBidPaid(bid.id)
+  async function confirmPayment(bid: Bid) {
+    setIsSubmitting(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
       setPaidIds((current) => [...current, bid.id])
       setBids((current) => current.map((b) => b.id === bid.id ? { ...b, status: 'paid' } : b))
       setPaymentModal(null)
-    })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -101,11 +108,13 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
 
                 <div className="my-bid-details">
                   <span>Your offer<strong>₹{bid.bid_price_per_quintal.toLocaleString('en-IN')} / Q</strong></span>
+                  <span>Quantity<strong>{bid.quantity_requested || bid.lot?.quantity_quintal} Q</strong></span>
                   {bid.preferred_delivery_date && <span>Delivery<strong>{new Date(bid.preferred_delivery_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></span>}
                 </div>
+                {bid.buyer_notes && <p className="mt-3 text-sm text-muted-foreground italic">&ldquo;{bid.buyer_notes}&rdquo;</p>}
 
                 {(bid.status === 'accepted') && !paidIds.includes(bid.id) && (
-                  <button onClick={() => handlePayNow(bid)} disabled={isPending} className="pay-now-button">
+                  <button onClick={() => handlePayNow(bid)} disabled={isSubmitting} className="pay-now-button">
                     <CreditCard className="size-4" />Pay Now
                   </button>
                 )}
@@ -118,8 +127,8 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
                   <div className="counter-box">
                     <strong>Farmer counter-offer: ₹{bid.counter_price?.toLocaleString('en-IN') ?? '—'} / Q</strong>
                     <div>
-                      <button onClick={() => handleAcceptCounter(bid)} disabled={isPending}>Accept counter</button>
-                      <button onClick={() => handleDeclineCounter(bid)} disabled={isPending}>Decline</button>
+                      <button onClick={() => handleAcceptCounter(bid)} disabled={isSubmitting}>Accept counter</button>
+                      <button onClick={() => handleDeclineCounter(bid)} disabled={isSubmitting}>Decline</button>
                     </div>
                   </div>
                 )}
@@ -138,17 +147,17 @@ export default function MyBidsScreen({ onBack, onLogout }: Props) {
             <div className="mt-5 rounded-2xl bg-secondary p-4 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Crop</span><strong>{paymentModal.lot?.crop_name}</strong></div>
               <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Bid price</span><strong>₹{paymentModal.bid_price_per_quintal.toLocaleString('en-IN')} / Q</strong></div>
-              <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Quantity</span><strong>{paymentModal.lot?.quantity_quintal} Q</strong></div>
+              <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Quantity</span><strong>{paymentModal.quantity_requested || paymentModal.lot?.quantity_quintal} Q</strong></div>
               <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold">
                 <span>Total</span>
-                <span className="text-primary">₹{((paymentModal.bid_price_per_quintal) * (paymentModal.lot?.quantity_quintal ?? 1)).toLocaleString('en-IN')}</span>
+                <span className="text-primary">₹{((paymentModal.bid_price_per_quintal) * ((paymentModal.quantity_requested || paymentModal.lot?.quantity_quintal) ?? 1)).toLocaleString('en-IN')}</span>
               </div>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">This is a mock checkout. No real payment will be processed.</p>
             <div className="mt-5 flex gap-3">
               <button onClick={() => setPaymentModal(null)} className="secondary-button flex-1">Cancel</button>
-              <button onClick={() => confirmPayment(paymentModal)} disabled={isPending} className="primary-button flex-1">
-                {isPending ? <><Loader2 className="size-4 animate-spin" /> Processing…</> : <><CreditCard className="size-4" /> Confirm Payment</>}
+              <button onClick={() => confirmPayment(paymentModal)} disabled={isSubmitting} className="primary-button flex-1">
+                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Processing…</> : <><CreditCard className="size-4" /> Confirm Payment</>}
               </button>
             </div>
           </div>

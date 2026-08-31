@@ -15,6 +15,8 @@ export async function placeBid(input: {
   bid_price_per_quintal: number
   preferred_delivery_date?: string
   transport_preference?: 'seller_delivery' | 'self_pickup'
+  quantity_requested?: number
+  buyer_notes?: string
 }): Promise<ActionResult<{ id: string }>> {
   try {
     const supabase = await getSupabaseServerClient()
@@ -29,6 +31,8 @@ export async function placeBid(input: {
         bid_price_per_quintal: input.bid_price_per_quintal,
         preferred_delivery_date: input.preferred_delivery_date ?? null,
         transport_preference: input.transport_preference ?? null,
+        quantity_requested: input.quantity_requested ?? null,
+        buyer_notes: input.buyer_notes ?? null,
         status: 'pending',
       })
       .select('id')
@@ -104,6 +108,31 @@ export async function updateBidStatus(
     const updatePayload: Record<string, unknown> = { status }
     if (status === 'counter' && counterPrice) {
       updatePayload.counter_price = counterPrice
+    }
+
+    if (status === 'accepted') {
+      // Get the lot_id of the accepted bid
+      const { data: bidData, error: bidError } = await (supabase
+        .from('bids') as any)
+        .select('lot_id')
+        .eq('id', bidId)
+        .single()
+        
+      if (!bidError && bidData?.lot_id) {
+        // Update all other pending bids for this lot to rejected
+        await (supabase
+          .from('bids') as any)
+          .update({ status: 'rejected' })
+          .eq('lot_id', bidData.lot_id)
+          .neq('id', bidId)
+          .eq('status', 'pending')
+
+        // Mark the crop lot as sold/not live
+        await (supabase
+          .from('crop_lots') as any)
+          .update({ is_live: false })
+          .eq('id', bidData.lot_id)
+      }
     }
 
     const { error } = await (supabase

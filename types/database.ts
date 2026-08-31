@@ -52,6 +52,8 @@ export interface Bid {
   bid_price_per_quintal: number
   preferred_delivery_date?: string | null
   transport_preference?: 'seller_delivery' | 'self_pickup' | null
+  quantity_requested?: number | null
+  buyer_notes?: string | null
   status: BidStatus
   counter_price?: number | null
   created_at: string
