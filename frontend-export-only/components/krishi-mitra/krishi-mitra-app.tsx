@@ -173,6 +173,8 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
       }
     }
     fetchRecent()
+    const interval = setInterval(fetchRecent, 3000)
+    return () => clearInterval(interval)
   }, [])
 
   // Form refs for the crop listing panel
@@ -596,6 +598,12 @@ export default function KrishiMitraApp() {
   if (role === 'login') return <LoginScreen onEnter={(r, name) => { setRole(r); if (name) setUserName(name); }} />
   if (role === 'farmer') return <FarmerDashboard userName={userName} onLogout={handleLogout} />
   if (role === 'buyer') {
+    if (buyerBids) {
+      return <MyBidsScreen onBack={() => setBuyerBids(false)} onLogout={handleLogout} />
+    }
+    if (buyerProfile) {
+      return <BuyerProfileScreen onBack={() => setBuyerProfile(false)} onLogout={handleLogout} />
+    }
     return <BuyerDashboardScreen userName={userName} onLogout={handleLogout} onProfile={() => setBuyerProfile(true)} onMyBids={() => setBuyerBids(true)} />
   }
 

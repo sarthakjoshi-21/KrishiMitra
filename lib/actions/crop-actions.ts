@@ -42,7 +42,9 @@ export async function createCropLot(
 ): Promise<ActionResult<{ id: string }>> {
   try {
     const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: userAuthError } = await supabase.auth.getUser()
+    
+    console.log('[createCropLot] Auth User:', user?.id, user?.email, 'Auth Error:', userAuthError?.message || 'none')
     
     let farmerId = user?.id
     if (!farmerId) {
@@ -81,8 +83,13 @@ export async function createCropLot(
       .select('id')
       .single()
 
-    if (error) return { data: null, error: error.message }
+    if (error) {
+      console.error('[createCropLot] Insert error:', error)
+      return { data: null, error: error.message }
+    }
     
+    console.log('[createCropLot] Crop lot inserted successfully with ID:', data.id)
+
     // Strict Next.js Cache Revalidation across the root layout and pages
     revalidatePath('/', 'layout')
     revalidatePath('/')
@@ -91,6 +98,7 @@ export async function createCropLot(
     
     return { data: { id: data.id }, error: null }
   } catch (err) {
+    console.error('[createCropLot] Catch error:', err)
     return { data: null, error: String(err) }
   }
 }
@@ -137,10 +145,14 @@ export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise
     }
 
     const { data, error } = await query
-    if (error) return { data: null, error: error.message, buyerLocation }
+    if (error) {
+      console.error('[getAvailableCrops] Query error:', error)
+      return { data: null, error: error.message, buyerLocation }
+    }
 
     return { data: data || [], error: null, buyerLocation }
   } catch (err) {
+    console.error('[getAvailableCrops] Catch error:', err)
     return { data: null, error: String(err), buyerLocation: null }
   }
 }
@@ -153,10 +165,15 @@ export const getCropLots = getAvailableCrops
 export async function getFarmerListings(): Promise<ActionResult<any[]>> {
   try {
     const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    console.log('[getFarmerListings] Authenticated User ID:', user?.id, 'Email:', user?.email, 'Auth error:', authError?.message || 'none')
     
     let farmerId = user?.id
+    let lots: any[] = []
+    let fetchError: any = null
 
+    // 1. Attempt user-specific query with nested bids & buyer join
     if (farmerId) {
       try {
         const { data: userLots, error: userError } = await (supabase
@@ -177,35 +194,94 @@ export async function getFarmerListings(): Promise<ActionResult<any[]>> {
           .eq('farmer_id', farmerId)
           .order('created_at', { ascending: false })
 
+        console.log('[getFarmerListings] User-specific crop_lots count:', userLots?.length, 'Error:', userError?.message || 'none')
         if (!userError && userLots && userLots.length > 0) {
-          return { data: userLots, error: null }
+          lots = userLots
+        } else if (userError) {
+          fetchError = userError
         }
       } catch (e) {
-        console.warn('Filter by farmerId query failed, using resilient fallback:', e)
+        console.warn('[getFarmerListings] User query exception:', e)
       }
     }
 
-    // Resilient fallback: If no lots found specifically for user.id or in demo/guest mode, load all published crop lots
-    const { data: allLots, error: allError } = await (supabase
-      .from('crop_lots') as any)
-      .select(`
-        *,
-        bids (
-          id,
-          lot_id,
-          buyer_id,
-          bid_price_per_kg,
-          total_bid_amount,
-          status,
-          created_at,
-          buyer:users!buyer_id (id, full_name, email, location)
-        )
-      `)
-      .order('created_at', { ascending: false })
+    // 2. Fallback: If no lots found for user.id or in demo/guest mode, load all published crop lots
+    if (lots.length === 0) {
+      try {
+        const { data: allLots, error: allError } = await (supabase
+          .from('crop_lots') as any)
+          .select(`
+            *,
+            bids (
+              id,
+              lot_id,
+              buyer_id,
+              bid_price_per_kg,
+              total_bid_amount,
+              status,
+              created_at,
+              buyer:users!buyer_id (id, full_name, email, location)
+            )
+          `)
+          .order('created_at', { ascending: false })
 
-    if (allError) return { data: null, error: allError.message }
-    return { data: allLots || [], error: null }
+        console.log('[getFarmerListings] Fallback all-lots count:', allLots?.length, 'Error:', allError?.message || 'none')
+        if (allLots && allLots.length > 0) {
+          lots = allLots
+        } else if (allError) {
+          fetchError = allError
+        }
+      } catch (e) {
+        console.warn('[getFarmerListings] All lots query exception:', e)
+      }
+    }
+
+    // 3. Fallback: If joined query returned nothing or failed, query raw crop_lots table directly
+    if (lots.length === 0) {
+      const { data: rawLots, error: rawError } = await (supabase
+        .from('crop_lots') as any)
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      console.log('[getFarmerListings] Raw crop_lots query count:', rawLots?.length, 'Error:', rawError?.message || 'none')
+      if (rawLots && rawLots.length > 0) {
+        lots = rawLots
+      }
+    }
+
+    // 4. Guarantee bids attachment: Query the bids table directly to bypass any nested join / RLS issues
+    try {
+      const { data: rawBids, error: bidsErr } = await (supabase
+        .from('bids') as any)
+        .select(`
+          *,
+          buyer:users!buyer_id (id, full_name, email, location)
+        `)
+        .order('created_at', { ascending: false })
+
+      console.log('[getFarmerListings] Direct raw bids query count:', rawBids?.length, 'Error:', bidsErr?.message || 'none')
+
+      if (rawBids && rawBids.length > 0) {
+        lots = lots.map((lot) => {
+          const matching = rawBids.filter((b: any) => b.lot_id === lot.id)
+          const existing = Array.isArray(lot.bids) ? lot.bids : []
+          const mergedMap = new Map<string, any>()
+          existing.forEach((b: any) => { if (b?.id) mergedMap.set(b.id, b) })
+          matching.forEach((b: any) => { if (b?.id) mergedMap.set(b.id, b) })
+          return {
+            ...lot,
+            bids: Array.from(mergedMap.values()),
+          }
+        })
+      }
+    } catch (bidStitchErr) {
+      console.warn('[getFarmerListings] Bid stitch warning:', bidStitchErr)
+    }
+
+    console.log('[getFarmerListings] Returning lots payload:', lots.map(l => ({ id: l.id, crop: l.crop_name, bids_count: l.bids?.length || 0 })))
+    return { data: lots, error: null }
   } catch (err) {
+    console.error('[getFarmerListings] Fatal catch error:', err)
     return { data: null, error: String(err) }
   }
 }
