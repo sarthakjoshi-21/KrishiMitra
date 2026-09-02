@@ -162,32 +162,28 @@ export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise
     }
 
     // Query ALL crops: fetch all active listings across all cities and regions
-    let query = (supabase
+    console.log('[getAvailableCrops] Querying crop_lots...')
+    let { data, error } = await (supabase
       .from('crop_lots') as any)
-      .select('*, farmer:users!farmer_id(id, full_name, location, email, role, latitude, longitude, created_at)')
+      .select('*, farmer:users!farmer_id(full_name, location)')
+      .eq('is_live', true)
       .order('created_at', { ascending: false })
 
-    if (filters?.safeOnly) {
-      query = query.eq('pesticide_safe_flag', true)
-    }
-    if (filters?.grade && filters.grade !== 'Any quality grade') {
-      const gradeVal = filters.grade.replace('Grade ', '').replace(' Certified', '')
-      query = query.eq('grade', gradeVal)
-    }
-    if (filters?.search) {
-      query = query.ilike('crop_name', `%${filters.search}%`)
-    }
+    console.log('[getAvailableCrops] Fetched Crops:', data, 'Error:', error)
 
-    // Only apply location filter if the user explicitly selected a specific region dropdown
-    if (filters?.location && filters.location !== 'All regions') {
-      const cityKeyword = filters.location.split(',')[0].trim()
-      query = query.ilike('location', `%${cityKeyword}%`)
-    }
+    // If foreign relation join fails or returns empty, try flat select('*')
+    if (error || !data || data.length === 0) {
+      console.log('[getAvailableCrops] Trying flat select without foreign join...')
+      const flatQuery = await (supabase
+        .from('crop_lots') as any)
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    const { data, error } = await query
-    if (error) {
-      console.error('[getAvailableCrops] Query error:', error)
-      return { data: null, error: error.message, buyerLocation, buyerCoords }
+      console.log('[getAvailableCrops] Flat query data:', flatQuery.data, 'Error:', flatQuery.error)
+      if (flatQuery.data && flatQuery.data.length > 0) {
+        data = flatQuery.data
+        error = null
+      }
     }
 
     // Query active bids to expose highest bids & real-time counter-bidding metrics

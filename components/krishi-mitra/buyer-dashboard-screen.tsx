@@ -380,64 +380,73 @@ export default function BuyerDashboardScreen({ userName, onLogout, onProfile, on
                       </button>
                     </div>
                   ) : (
-                    visible.map((lot) => (
-                      <article key={lot.id} className="buyer-lot-card relative group">
-                        <div className="buyer-lot-visual">
-                          <span>{lot.crop_name.split(' ').slice(-1)[0]}</span>
-                          <b>Grade {lot.grade}</b>
-                        </div>
-                        <div className="buyer-lot-body">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <h2 className="font-bold text-base text-foreground">{lot.crop_name}</h2>
-                              <div className="flex items-center gap-2 mt-1">
-                                <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="size-3 text-primary" />{lot.location}</p>
-                                {lot.distance_km !== undefined && (
-                                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-                                    📍 {formatDistance(lot.distance_km)}
+                      visible.map((lot) => (
+                        <article key={lot.id} className="buyer-lot-card relative group">
+                          <div className="buyer-lot-visual">
+                            <span>{(lot.crop_name || 'Crop').split(' ').slice(-1)[0]}</span>
+                            <b>Grade {lot.grade || 'A'}</b>
+                          </div>
+                          <div className="buyer-lot-body">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <h2 className="font-bold text-base text-foreground">{lot.crop_name || 'Harvest Lot'}</h2>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <MapPin className="size-3 text-primary" />
+                                    {lot.location || 'Location pending'}
+                                  </p>
+                                  {lot.distance_km !== undefined && (
+                                    <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+                                      📍 {formatDistance(lot.distance_km)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <Trend type={lot.pesticide_safe_flag ? 'up' : 'stable'} text={lot.pesticide_safe_flag ? '+safe' : '~verify'} />
+                            </div>
+
+                            <div className="buyer-lot-meta mt-2">
+                              <span className={lot.pesticide_safe_flag ? 'safe' : 'unknown'}>{lot.pesticide_safe_flag ? '✅ Safe to sell' : '❓ Cannot verify'}</span>
+                              {lot.needs_transport && <span className="ml-2 text-[11px] text-muted-foreground">🚛 Transport needed</span>}
+                            </div>
+
+                            {/* Dynamic Competitive Bidding Line */}
+                            <div className="mt-3 rounded-xl border border-border/80 bg-secondary/40 p-2.5 text-xs flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-amber-500 font-bold">🏆</span>
+                                {lot.highest_bid_per_kg ? (
+                                  <span className="font-semibold text-foreground">
+                                    Current Highest Bid: <strong className="text-primary font-bold">₹{Number(lot.highest_bid_per_kg).toFixed(2)} / kg</strong>
+                                    <span className="text-[10px] text-muted-foreground ml-1">({lot.bids_count || lot.bids?.length || 1} offer{lot.bids_count !== 1 ? 's' : ''})</span>
                                   </span>
+                                ) : (
+                                  <span className="text-muted-foreground italic">No bids yet · Be the first to bid</span>
                                 )}
                               </div>
-                            </div>
-                            <Trend type={lot.pesticide_safe_flag ? 'up' : 'stable'} text={lot.pesticide_safe_flag ? '+safe' : '~verify'} />
-                          </div>
-
-                          <div className="buyer-lot-meta mt-2">
-                            <span className={lot.pesticide_safe_flag ? 'safe' : 'unknown'}>{lot.pesticide_safe_flag ? '✅ Safe to sell' : '❓ Cannot verify'}</span>
-                            {lot.needs_transport && <span className="ml-2 text-[11px] text-muted-foreground">🚛 Transport needed</span>}
-                          </div>
-
-                          {/* Dynamic Competitive Bidding Line */}
-                          <div className="mt-3 rounded-xl border border-border/80 bg-secondary/40 p-2.5 text-xs flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-amber-500 font-bold">🏆</span>
-                              {lot.highest_bid_per_kg ? (
-                                <span className="font-semibold text-foreground">
-                                  Current Highest Bid: <strong className="text-primary font-bold">₹{Number(lot.highest_bid_per_kg).toFixed(2)} / kg</strong>
-                                  <span className="text-[10px] text-muted-foreground ml-1">({lot.bids_count || lot.bids?.length || 1} offer{lot.bids_count !== 1 ? 's' : ''})</span>
+                              {lot.user_bid_per_kg ? (
+                                <span className="rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                  Your Bid: ₹{Number(lot.user_bid_per_kg).toFixed(2)}/kg
                                 </span>
-                              ) : (
-                                <span className="text-muted-foreground italic">No bids yet · Be the first to bid</span>
-                              )}
+                              ) : null}
                             </div>
-                            {lot.user_bid_per_kg ? (
-                              <span className="rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
-                                Your Bid: ₹{Number(lot.user_bid_per_kg).toFixed(2)}/kg
+
+                            <div className="buyer-lot-footer mt-3">
+                              <span>
+                                {lot.farmer?.full_name ?? 'Verified Farmer'}
+                                <small>{lot.quantity_quintal || 0} Q ({(Number(lot.quantity_quintal) || 0) * 100} kg)</small>
                               </span>
-                            ) : null}
-                          </div>
+                              <strong>
+                                ₹{((Number(lot.asking_price_per_quintal) || 0) / 100).toFixed(2)}
+                                <small>Asking price / kg (₹{(Number(lot.asking_price_per_quintal) || 0).toLocaleString('en-IN')}/Q)</small>
+                              </strong>
+                            </div>
 
-                          <div className="buyer-lot-footer mt-3">
-                            <span>{lot.farmer?.full_name ?? 'Verified Farmer'}<small>{lot.quantity_quintal} Q ({lot.quantity_quintal * 100} kg)</small></span>
-                            <strong>₹{(lot.asking_price_per_quintal / 100).toFixed(2)}<small>Asking price / kg (₹{lot.asking_price_per_quintal.toLocaleString('en-IN')}/Q)</small></strong>
+                            <button onClick={() => openOffer(lot)} className="make-offer-button mt-3">
+                              {lot.user_bid_per_kg ? 'Submit Counter-Offer' : 'Place Bid / Offer'} <ArrowRight className="size-4" />
+                            </button>
                           </div>
-
-                          <button onClick={() => openOffer(lot)} className="make-offer-button mt-3">
-                            {lot.user_bid_per_kg ? 'Submit Counter-Offer' : 'Place Bid / Offer'} <ArrowRight className="size-4" />
-                          </button>
-                        </div>
-                      </article>
-                    ))
+                        </article>
+                      ))
                   )}
                 </section>
               )}
