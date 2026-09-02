@@ -3,10 +3,12 @@
 export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, IndianRupee, Loader2, MapPin, Minus, PlusCircle, TrendingUp, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, IndianRupee, Loader2, LocateFixed, Map as MapIcon, MapPin, Minus, PlusCircle, TrendingUp, X } from 'lucide-react'
 import { getBidsForFarmer, updateBidStatus } from '@/lib/actions/bid-actions'
 import { getFarmerListings } from '@/lib/actions/crop-actions'
 import type { Bid } from '@/types/database'
+import InteractiveMap from '@/components/InteractiveMap'
+import { getCurrentUserPosition, formatDistance } from '@/lib/geo-utils'
 
 type Props = { onLogout: () => void; onNavigate: (tab: string) => void }
 
@@ -23,7 +25,7 @@ function Trend({ type, text }: { type: 'up' | 'down' | 'stable'; text: string })
 }
 
 export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
-  const [view, setView] = useState<'bids' | 'market'>('bids')
+  const [view, setView] = useState<'bids' | 'map' | 'market'>('bids')
   const [listings, setListings] = useState<any[]>([])
   const [bids, setBids] = useState<Bid[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,6 +34,15 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   const [counterPrice, setCounterPrice] = useState('')
   const [paymentModal, setPaymentModal] = useState<Bid | null>(null)
   const [toast, setToast] = useState('')
+  const [farmerCoords, setFarmerCoords] = useState<{ lat: number; lng: number } | null>(null)
+
+  useEffect(() => {
+    async function detectFarmerGPS() {
+      const pos = await getCurrentUserPosition()
+      if (pos) setFarmerCoords(pos)
+    }
+    detectFarmerGPS()
+  }, [])
 
   useEffect(() => {
     if (toast) {
@@ -175,7 +186,9 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
         <div className="flex items-center gap-4">
           <button onClick={() => onNavigate('Overview')} className="secondary-button"><ArrowLeft className="size-4" /> Dashboard</button>
           <div><p className="font-serif text-lg font-bold text-foreground">कृषि-मित्र</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Krishi Mitra</p></div>
-          <span className="hidden rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-primary md:inline-flex">Online &amp; synced</span>
+          <span className="hidden rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-primary md:inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-green-500 animate-pulse"></span> GPS &amp; OpenStreetMap Synced
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => onNavigate('Overview')} className="primary-button hidden sm:inline-flex"><PlusCircle className="size-4" /> Publish Crop</button>
@@ -203,17 +216,34 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
             <div>
               <p className="eyebrow">Post-harvest &amp; Sales</p>
               <h1 className="mt-2 text-3xl font-bold text-foreground">Market &amp; Bids</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Manage your published crop lots and review incoming buyer offers in real time.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Manage your published crop lots, locate buyers on OpenStreetMap, and review incoming offers in real time.</p>
             </div>
             <button onClick={() => onNavigate('Overview')} className="primary-button sm:hidden"><PlusCircle className="size-4" /> Publish New Crop</button>
           </div>
 
           <div className="market-tabs">
             <button className={view === 'bids' ? 'active' : ''} onClick={() => setView('bids')}>Published Crops &amp; Active Bids</button>
+            <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')}>🗺️ Interactive Map &amp; Bidders</button>
             <button className={view === 'market' ? 'active' : ''} onClick={() => setView('market')}>Mandi Trends</button>
           </div>
 
-          {view === 'bids' ? (
+          {view === 'map' ? (
+            <section className="space-y-4">
+              <InteractiveMap
+                userLocation={farmerCoords}
+                userLabel="Your Farm / Mandi"
+                lots={displayLots.map((d) => d.lot)}
+                bids={bids}
+                onSelectBid={openCounter}
+                height="580px"
+                zoom={10}
+              />
+              <div className="rounded-2xl border border-border bg-card p-4 text-xs">
+                <p className="font-bold text-foreground mb-1">🗺️ Live OpenStreetMap View</p>
+                <p className="text-muted-foreground">Green markers represent your active crop lots. Orange markers represent buyers who have submitted live bids. Click any pin to inspect details.</p>
+              </div>
+            </section>
+          ) : view === 'bids' ? (
             <section className="market-listings">
               {loading ? (
                 <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Loading published crops…</div>
@@ -243,7 +273,7 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                     <div className="market-offers">
                       <div className="flex items-center justify-between">
                         <p className="eyebrow">Buyer offers for this lot</p>
-                        <span className="text-xs text-muted-foreground">{lotBids.length} offer{lotBids.length !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-muted-foreground">{lotBids.length} offer${lotBids.length !== 1 ? 's' : ''}</span>
                       </div>
                       {lotBids.length === 0 ? (
                         <div className="rounded-xl bg-secondary/40 p-4 text-center text-xs text-muted-foreground">
@@ -278,9 +308,9 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                               </div>
                               {bid.status === 'pending' && (
                                 <div className="market-offer-actions self-start ml-2">
-                                  <button onClick={() => accept(bid)} aria-label={`Accept ${bid.buyer?.full_name}`} disabled={isSubmitting}><Check className="size-4" /></button>
-                                  <button onClick={() => reject(bid)} aria-label={`Reject ${bid.buyer?.full_name}`} disabled={isSubmitting}><X className="size-4" /></button>
-                                  <button onClick={() => openCounter(bid)} className="counter-button" disabled={isSubmitting}>Counter</button>
+                                  <button onClick={() => accept(bid)} disabled={isSubmitting} className="accept-button">Accept</button>
+                                  <button onClick={() => openCounter(bid)} disabled={isSubmitting} className="counter-button">Counter</button>
+                                  <button onClick={() => reject(bid)} disabled={isSubmitting} className="reject-button">Reject</button>
                                 </div>
                               )}
                             </div>
@@ -292,59 +322,61 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
               )}
             </section>
           ) : (
-            <section className="market-view">
-              <article className="market-price-panel">
-                <div className="market-section-title">
-                  <div><p className="eyebrow">Live mandi prices</p><h2>Today&apos;s market pulse</h2></div>
-                  <span className="live-dot">Live</span>
-                </div>
-                {prices.map((price) => (
-                  <div className="market-price-row" key={price.crop}>
-                    <div><strong>{price.crop}</strong><small>Updated {price.updated}</small></div>
-                    <b>{price.price}</b>
-                    <Trend type={price.trend} text={price.percent} />
+            <section className="market-listings">
+              <div className="price-trends-card rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between pb-4 border-b border-border">
+                  <div>
+                    <h2 className="text-xl font-bold">State Mandi Live Index</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">Real-time modal prices across APMC markets</p>
                   </div>
-                ))}
-              </article>
+                  <span className="live-dot font-semibold text-xs text-primary">● Live</span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {prices.map((p) => (
+                    <div key={p.crop} className="flex items-center justify-between p-3 rounded-xl bg-secondary/40">
+                      <div>
+                        <strong className="text-sm">{p.crop}</strong>
+                        <span className="text-[11px] text-muted-foreground block">{p.updated}</span>
+                      </div>
+                      <div className="text-right flex items-center gap-3">
+                        <strong className="text-base">{p.price}</strong>
+                        <Trend type={p.trend} text={p.percent} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </section>
           )}
         </main>
       </div>
 
-      {/* Counter Bid Modal */}
+      {/* Counter Offer Modal */}
       {counterModal && (
         <div className="modal-backdrop" onClick={() => setCounterModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <p className="eyebrow">Counter offer</p>
-            <h2 className="mt-2 font-serif text-2xl font-bold">Send Counter Bid</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Responding to {counterModal.buyer?.full_name}&apos;s offer of ₹{Number(counterModal.bid_price_per_kg || ((counterModal.bid_price_per_quintal || 0) / 100)).toFixed(2)} / kg
-            </p>
-            <label className="field mt-6">
-              <span>Your counter price (₹ / kg)</span>
-              <input type="number" value={counterPrice} onChange={(e) => setCounterPrice(e.target.value)} />
-            </label>
-            <div className="mt-5 flex gap-3">
+            <p className="eyebrow">Direct Negotiation</p>
+            <h2 className="mt-2 font-serif text-2xl font-bold">Counter-Bid</h2>
+            <p className="text-xs text-muted-foreground mt-1">Buyer: {counterModal.buyer?.full_name || 'Buyer'} · Current Bid: ₹{Number(counterModal.bid_price_per_kg || 0).toFixed(2)}/kg</p>
+            <div className="mt-4">
+              <label className="field">
+                <span>Your Counter-Offer (₹ per kg)</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="1"
+                  value={counterPrice}
+                  onChange={(e) => setCounterPrice(e.target.value)}
+                  placeholder="e.g. 36.00"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex gap-3">
               <button onClick={() => setCounterModal(null)} className="secondary-button flex-1">Cancel</button>
-              <button onClick={submitCounter} disabled={isSubmitting || !counterPrice} className="primary-button flex-1">
-                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Sending…</> : <>Send Counter <ArrowRight className="size-4" /></>}
+              <button onClick={submitCounter} disabled={isSubmitting} className="primary-button flex-1">
+                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Sending…</> : 'Send Counter-Offer'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Post-Accept Payment Notification */}
-      {paymentModal && (
-        <div className="modal-backdrop" onClick={() => setPaymentModal(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground mx-auto"><Check className="size-7" /></div>
-            <p className="eyebrow mt-4 text-center">Bid accepted!</p>
-            <h2 className="mt-2 text-center font-serif text-2xl font-bold">₹{Number(paymentModal.bid_price_per_kg || ((paymentModal.bid_price_per_quintal || 0) / 100)).toFixed(2)} / kg</h2>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              You accepted {paymentModal.buyer?.full_name}&apos;s offer (Total: ₹{Number(paymentModal.total_bid_amount || 0).toLocaleString('en-IN')}). The buyer will be notified and prompted to pay.
-            </p>
-            <button onClick={() => setPaymentModal(null)} className="primary-button mt-6 w-full justify-center">Done</button>
           </div>
         </div>
       )}

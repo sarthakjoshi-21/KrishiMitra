@@ -7,6 +7,7 @@ import { createCropLot, getActiveCrops } from '@/lib/actions/crop-actions'
 import { getBidsForFarmer } from '@/lib/actions/bid-actions'
 import { getNotificationsForUser, markNotificationRead } from '@/lib/actions/notification-actions'
 import { getSession, signOut } from '@/lib/actions/auth-actions'
+import { getCurrentUserPosition } from '@/lib/geo-utils'
 import type { AppNotification, CropLot } from '@/types/database'
 import LoginScreen from './login-screen'
 import { LanguageProvider, useLanguage } from './language-context'
@@ -196,12 +197,15 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
     setPublishError('')
 
     try {
+      const pos = await getCurrentUserPosition()
       const result = await createCropLot({
         crop_name: cropName,
         grade: 'A',
         quantity_quintal: qty,
         asking_price_per_quintal: price,
         location,
+        latitude: pos?.lat,
+        longitude: pos?.lng,
         pesticide_safe_flag: true,
         ai_grade_confidence: 94,
         ai_notes: 'Grade A quality · Moisture 11.8% · No visible issues detected',

@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Noto_Serif_Devanagari } from 'next/font/google'
 import './globals.css'
+import 'leaflet/dist/leaflet.css'
 import { LanguageProvider } from '@/components/krishi-mitra/language-context'
 import { TranslationLayer } from '@/components/krishi-mitra/translation-layer'
 

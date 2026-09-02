@@ -66,29 +66,67 @@ export async function placeBid(
     const totalQuantityKg = Number(lot.quantity_quintal || 1) * 100
     const totalBidAmount = Number((bidPricePerKg * totalQuantityKg).toFixed(2))
 
-    // Insert the record into public.bids
-    const { data, error } = await (supabase
+    // Smart Upsert: Check if this buyer already has a 'pending' or 'counter' bid on this lot
+    const { data: existingBid } = await (supabase
       .from('bids') as any)
-      .insert({
-        lot_id: lotId,
-        buyer_id: buyerId,
-        bid_price_per_kg: bidPricePerKg,
-        total_bid_amount: totalBidAmount,
-        status: 'pending',
-      })
-      .select('id')
-      .single()
+      .select('id, status, bid_price_per_kg')
+      .eq('lot_id', lotId)
+      .eq('buyer_id', buyerId)
+      .in('status', ['pending', 'counter'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    if (error) return { data: null, error: error.message }
+    let bidId: string
+    let isCounterOffer = false
 
-    // Notify the farmer about the new bid
+    if (existingBid?.id) {
+      // Execute UPDATE to modify the existing pending bid without duplicating rows
+      const { data: updatedBid, error: updateError } = await (supabase
+        .from('bids') as any)
+        .update({
+          bid_price_per_kg: bidPricePerKg,
+          total_bid_amount: totalBidAmount,
+          status: 'pending',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingBid.id)
+        .select('id')
+        .single()
+
+      if (updateError) return { data: null, error: updateError.message }
+      bidId = updatedBid.id
+      isCounterOffer = true
+      console.log('[placeBid] Counter-offer updated successfully for bid ID:', bidId, 'New Price:', bidPricePerKg)
+    } else {
+      // Execute standard INSERT for new bid
+      const { data: newBid, error: insertError } = await (supabase
+        .from('bids') as any)
+        .insert({
+          lot_id: lotId,
+          buyer_id: buyerId,
+          bid_price_per_kg: bidPricePerKg,
+          total_bid_amount: totalBidAmount,
+          status: 'pending',
+        })
+        .select('id')
+        .single()
+
+      if (insertError) return { data: null, error: insertError.message }
+      bidId = newBid.id
+      console.log('[placeBid] New bid inserted successfully with ID:', bidId, 'Price:', bidPricePerKg)
+    }
+
+    // Notify the farmer about the new bid or counter-offer
     if (lot?.farmer_id) {
       const { data: buyerProfile } = await (supabase.from('users') as any)
         .select('full_name')
         .eq('id', buyerId)
         .maybeSingle()
       const buyerName = buyerProfile?.full_name || 'A buyer'
-      const notificationMsg = `New bid received for your ${lot.crop_name || 'crop'} lot! (₹${bidPricePerKg.toFixed(2)}/kg · Total: ₹${totalBidAmount.toLocaleString('en-IN')} by ${buyerName})`
+      const notificationMsg = isCounterOffer
+        ? `Counter-offer updated for your ${lot.crop_name || 'crop'} lot! (₹${bidPricePerKg.toFixed(2)}/kg · Total: ₹${totalBidAmount.toLocaleString('en-IN')} by ${buyerName})`
+        : `New bid received for your ${lot.crop_name || 'crop'} lot! (₹${bidPricePerKg.toFixed(2)}/kg · Total: ₹${totalBidAmount.toLocaleString('en-IN')} by ${buyerName})`
 
       try {
         await (supabase.from('notifications') as any).insert({
@@ -107,7 +145,7 @@ export async function placeBid(
     revalidatePath('/buyer-login')
     revalidatePath('/farmer-login')
 
-    return { data: { id: data.id, total_bid_amount: totalBidAmount }, error: null }
+    return { data: { id: bidId, total_bid_amount: totalBidAmount }, error: null }
   } catch (err) {
     return { data: null, error: String(err) }
   }

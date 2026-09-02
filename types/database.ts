@@ -15,6 +15,8 @@ export interface AppUser {
   phone?: string | null
   farmer_id?: string | null
   location?: string | null
+  latitude?: number | null
+  longitude?: number | null
   created_at: string
 }
 
@@ -27,6 +29,8 @@ export interface CropLot {
   quantity_quintal: number
   asking_price_per_quintal: number
   location: string
+  latitude?: number | null
+  longitude?: number | null
   moisture_percent?: number | null
   // Pesticide safety columns
   pesticide_name?: string | null
@@ -43,6 +47,11 @@ export interface CropLot {
   updated_at: string
   // Joined
   farmer?: AppUser
+  distance_km?: number
+  highest_bid_per_kg?: number | null
+  bids_count?: number
+  bids?: Bid[]
+  user_bid_per_kg?: number | null
 }
 
 export interface Bid {
@@ -60,6 +69,8 @@ export interface Bid {
   quantity_requested?: number | null
   buyer_notes?: string | null
   counter_price?: number | null
+  latitude?: number | null
+  longitude?: number | null
   updated_at?: string
   // Joined
   lot?: CropLot

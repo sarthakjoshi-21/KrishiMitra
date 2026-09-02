@@ -3,6 +3,7 @@
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { CropGrade } from '@/types/database'
+import { calculateHaversineDistance, getCoordinatesForLocation } from '@/lib/geo-utils'
 
 export interface CreateCropLotInput {
   crop_name: string
@@ -11,6 +12,8 @@ export interface CreateCropLotInput {
   quantity_quintal: number
   asking_price_per_quintal: number
   location: string
+  latitude?: number
+  longitude?: number
   moisture_percent?: number
   pesticide_name?: string
   pesticide_phi_days?: number
@@ -28,15 +31,19 @@ export interface AvailableCropsFilter {
   grade?: string
   location?: string
   matchBuyerLocation?: boolean
+  buyerLat?: number
+  buyerLng?: number
+  sortByDistance?: boolean
 }
 
 export interface ActionResult<T = null> {
   data: T | null
   error: string | null
   buyerLocation?: string | null
+  buyerCoords?: { lat: number; lng: number } | null
 }
 
-/** Farmer creates a new crop listing with strict cache revalidation */
+/** Farmer creates a new crop listing with GPS coordinates and strict cache revalidation */
 export async function createCropLot(
   input: CreateCropLotInput
 ): Promise<ActionResult<{ id: string }>> {
@@ -59,6 +66,11 @@ export async function createCropLot(
 
     if (!farmerId) return { data: null, error: 'Not authenticated. Please log in.' }
 
+    // Resolve GPS coordinate pins
+    const coords = (input.latitude && input.longitude)
+      ? { lat: input.latitude, lng: input.longitude }
+      : getCoordinatesForLocation(input.location)
+
     const { data, error } = await (supabase
       .from('crop_lots') as any)
       .insert({
@@ -69,6 +81,8 @@ export async function createCropLot(
         quantity_quintal: input.quantity_quintal,
         asking_price_per_quintal: input.asking_price_per_quintal,
         location: input.location,
+        latitude: coords.lat,
+        longitude: coords.lng,
         moisture_percent: input.moisture_percent ?? null,
         pesticide_name: input.pesticide_name ?? null,
         pesticide_phi_days: input.pesticide_phi_days ?? null,
@@ -88,7 +102,7 @@ export async function createCropLot(
       return { data: null, error: error.message }
     }
     
-    console.log('[createCropLot] Crop lot inserted successfully with ID:', data.id)
+    console.log('[createCropLot] Crop lot inserted successfully with ID:', data.id, 'Coords:', coords)
 
     // Strict Next.js Cache Revalidation across the root layout and pages
     revalidatePath('/', 'layout')
@@ -103,20 +117,33 @@ export async function createCropLot(
   }
 }
 
-/** Fetch active crop listings with strict city-matching for the buyer */
+/** Fetch active crop listings with distance calculation and coordinates */
 export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise<ActionResult<any[]>> {
   try {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     let buyerLocation: string | null = null
+    let buyerCoords: { lat: number; lng: number } | null = null
+
     if (user) {
       const { data: profile } = await (supabase
         .from('users') as any)
-        .select('location')
+        .select('location, latitude, longitude')
         .eq('id', user.id)
         .maybeSingle()
       buyerLocation = profile?.location || null
+      if (profile?.latitude && profile?.longitude) {
+        buyerCoords = { lat: Number(profile.latitude), lng: Number(profile.longitude) }
+      }
+    }
+
+    if (!buyerCoords && buyerLocation) {
+      buyerCoords = getCoordinatesForLocation(buyerLocation)
+    }
+
+    if (filters?.buyerLat && filters?.buyerLng) {
+      buyerCoords = { lat: filters.buyerLat, lng: filters.buyerLng }
     }
 
     // Determine target location (explicit filter takes precedence, otherwise strict matching on buyer's registered city)
@@ -125,7 +152,7 @@ export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise
 
     let query = (supabase
       .from('crop_lots') as any)
-      .select('*, farmer:users!farmer_id(id, full_name, location, email, role, created_at)')
+      .select('*, farmer:users!farmer_id(id, full_name, location, email, role, latitude, longitude, created_at)')
       .eq('is_live', true)
       .order('created_at', { ascending: false })
 
@@ -147,13 +174,69 @@ export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise
     const { data, error } = await query
     if (error) {
       console.error('[getAvailableCrops] Query error:', error)
-      return { data: null, error: error.message, buyerLocation }
+      return { data: null, error: error.message, buyerLocation, buyerCoords }
     }
 
-    return { data: data || [], error: null, buyerLocation }
+    // Query active bids to expose highest bids & real-time counter-bidding metrics
+    let allBids: any[] = []
+    try {
+      const { data: bidsData } = await (supabase
+        .from('bids') as any)
+        .select(`
+          id,
+          lot_id,
+          buyer_id,
+          bid_price_per_kg,
+          total_bid_amount,
+          status,
+          created_at,
+          buyer:users!buyer_id (
+            id,
+            full_name,
+            location
+          )
+        `)
+        .order('bid_price_per_kg', { ascending: false })
+      if (bidsData) allBids = bidsData
+    } catch (bidsErr) {
+      console.warn('[getAvailableCrops] Bids fetch warning:', bidsErr)
+    }
+
+    let lots = (data || []).map((lot: any) => {
+      const coords = getCoordinatesForLocation(lot.location, lot.latitude, lot.longitude, lot.id)
+      let distance_km: number | undefined = undefined
+      if (buyerCoords) {
+        distance_km = calculateHaversineDistance(buyerCoords.lat, buyerCoords.lng, coords.lat, coords.lng)
+      }
+
+      // Attach bids & competitive auction metrics
+      const matchingBids = allBids.filter((b: any) => b.lot_id === lot.id)
+      const validPrices = matchingBids.map((b: any) => Number(b.bid_price_per_kg) || 0).filter((p: number) => p > 0)
+      const highestBid = validPrices.length > 0 ? Math.max(...validPrices) : null
+      const userBid = user?.id
+        ? matchingBids.find((b: any) => b.buyer_id === user.id)
+        : null
+
+      return {
+        ...lot,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        distance_km,
+        bids: matchingBids,
+        bids_count: matchingBids.length,
+        highest_bid_per_kg: highestBid,
+        user_bid_per_kg: userBid ? Number(userBid.bid_price_per_kg) : null,
+      }
+    })
+
+    if (filters?.sortByDistance && buyerCoords) {
+      lots = [...lots].sort((a, b) => (a.distance_km ?? 9999) - (b.distance_km ?? 9999))
+    }
+
+    return { data: lots, error: null, buyerLocation, buyerCoords }
   } catch (err) {
     console.error('[getAvailableCrops] Catch error:', err)
-    return { data: null, error: String(err), buyerLocation: null }
+    return { data: null, error: String(err), buyerLocation: null, buyerCoords: null }
   }
 }
 
