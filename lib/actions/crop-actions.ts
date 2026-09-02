@@ -12,8 +12,8 @@ export interface CreateCropLotInput {
   quantity_quintal: number
   asking_price_per_quintal: number
   location: string
-  latitude?: number
-  longitude?: number
+  latitude?: number | null
+  longitude?: number | null
   moisture_percent?: number
   pesticide_name?: string
   pesticide_phi_days?: number
@@ -66,10 +66,25 @@ export async function createCropLot(
 
     if (!farmerId) return { data: null, error: 'Not authenticated. Please log in.' }
 
-    // Resolve GPS coordinate pins
-    const coords = (input.latitude && input.longitude)
-      ? { lat: input.latitude, lng: input.longitude }
-      : getCoordinatesForLocation(input.location)
+    // Resolve GPS coordinates: use exact captured coordinates if provided, else fall back to city coordinate or null
+    let lat: number | null = null
+    let lng: number | null = null
+
+    if (
+      input.latitude !== undefined &&
+      input.latitude !== null &&
+      !isNaN(Number(input.latitude)) &&
+      input.longitude !== undefined &&
+      input.longitude !== null &&
+      !isNaN(Number(input.longitude))
+    ) {
+      lat = Number(Number(input.latitude).toFixed(7))
+      lng = Number(Number(input.longitude).toFixed(7))
+    } else if (input.location) {
+      const cityCoords = getCoordinatesForLocation(input.location)
+      lat = cityCoords.lat
+      lng = cityCoords.lng
+    }
 
     const { data, error } = await (supabase
       .from('crop_lots') as any)
@@ -81,8 +96,8 @@ export async function createCropLot(
         quantity_quintal: input.quantity_quintal,
         asking_price_per_quintal: input.asking_price_per_quintal,
         location: input.location,
-        latitude: coords.lat,
-        longitude: coords.lng,
+        latitude: lat,
+        longitude: lng,
         moisture_percent: input.moisture_percent ?? null,
         pesticide_name: input.pesticide_name ?? null,
         pesticide_phi_days: input.pesticide_phi_days ?? null,
@@ -102,7 +117,7 @@ export async function createCropLot(
       return { data: null, error: error.message }
     }
     
-    console.log('[createCropLot] Crop lot inserted successfully with ID:', data.id, 'Coords:', coords)
+    console.log('[createCropLot] Crop lot inserted successfully with ID:', data.id, 'Latitude:', lat, 'Longitude:', lng)
 
     // Strict Next.js Cache Revalidation across the root layout and pages
     revalidatePath('/', 'layout')

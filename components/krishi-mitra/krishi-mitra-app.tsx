@@ -196,16 +196,45 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
     setIsPublishing(true)
     setPublishError('')
 
+    // 1. Location Capture: Request exact GPS coordinates with safe fallback if blocked or unsupported
+    let coords: { lat: number; lng: number } | null = null
     try {
-      const pos = await getCurrentUserPosition()
+      if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+        coords = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              resolve({
+                lat: Number(pos.coords.latitude.toFixed(7)),
+                lng: Number(pos.coords.longitude.toFixed(7)),
+              })
+            },
+            (err) => {
+              console.warn('[handlePublish] Geolocation denied or unavailable:', err.message)
+              resolve(null)
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 60000,
+            }
+          )
+        })
+      }
+    } catch (geoErr) {
+      console.warn('[handlePublish] Geolocation exception handled gracefully:', geoErr)
+      coords = null
+    }
+
+    // 2. Server Action: Insert crop lot with coordinates (or null if blocked)
+    try {
       const result = await createCropLot({
         crop_name: cropName,
         grade: 'A',
         quantity_quintal: qty,
         asking_price_per_quintal: price,
         location,
-        latitude: pos?.lat,
-        longitude: pos?.lng,
+        latitude: coords?.lat ?? null,
+        longitude: coords?.lng ?? null,
         pesticide_safe_flag: true,
         ai_grade_confidence: 94,
         ai_notes: 'Grade A quality · Moisture 11.8% · No visible issues detected',
@@ -216,7 +245,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
         // Graceful fallback for unconfigured Supabase or demo mode
         if (result.error.includes('fetch') || result.error.includes('URL') || result.error.includes('authenticated')) {
           setPublishStatus('success')
-          setToast('Crop successfully published to marketplace!')
+          setToast(coords ? 'Crop published with GPS map pin!' : 'Crop published to marketplace!')
           setCropPhoto(null)
           await loadCrops()
           setTimeout(() => setPublishStatus('idle'), 3000)
@@ -228,7 +257,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
       }
 
       setPublishStatus('success')
-      setToast('Crop successfully published to marketplace!')
+      setToast(coords ? 'Crop published with GPS map pin!' : 'Crop published to marketplace!')
       setCropPhoto(null)
       await loadCrops() // Instantly refresh the UI feed
       setTimeout(() => setPublishStatus('idle'), 3000)

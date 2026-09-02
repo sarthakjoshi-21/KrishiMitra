@@ -9,6 +9,7 @@ import { getFarmerListings } from '@/lib/actions/crop-actions'
 import type { Bid } from '@/types/database'
 import InteractiveMap from '@/components/InteractiveMap'
 import { getCurrentUserPosition, formatDistance } from '@/lib/geo-utils'
+import BidRow from './bid-row'
 
 type Props = { onLogout: () => void; onNavigate: (tab: string) => void }
 
@@ -286,35 +287,19 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                             const priceB = b.bid_price_per_kg ? Number(b.bid_price_per_kg) : (b.bid_price_per_quintal ? b.bid_price_per_quintal / 100 : 0)
                             return priceB - priceA
                           })
-                          .map((bid: any, index: number) => {
-                            const pricePerKg = bid.bid_price_per_kg ? Number(bid.bid_price_per_kg) : (bid.bid_price_per_quintal ? bid.bid_price_per_quintal / 100 : 0)
-                            const totalAmount = bid.total_bid_amount ? Number(bid.total_bid_amount) : (pricePerKg * (lot?.quantity_quintal || 1) * 100)
-                            return (
-                            <div className="market-offer" key={bid.id}>
-                              <div className="flex-1">
-                                <strong>{index + 1}. {bid.buyer?.full_name ?? 'Verified Buyer'}</strong>
-                                <small className="block mt-0.5">
-                                  {bid.status === 'accepted' ? '✓ Offer accepted' :
-                                    bid.status === 'rejected' ? '✗ Offer rejected' :
-                                      bid.status === 'counter' ? `↕ Counter sent: ₹${(Number(bid.counter_price) || 0).toLocaleString('en-IN')}` :
-                                        'Buyer live offer'}
-                                  {' · '}{lot?.quantity_quintal} Q ({Number(lot?.quantity_quintal || 1) * 100} kg)
-                                </small>
-                                {bid.buyer_notes && <p className="mt-1 text-xs text-muted-foreground bg-secondary/50 p-1.5 rounded-md italic">&ldquo;{bid.buyer_notes}&rdquo;</p>}
-                              </div>
-                              <div className="text-right">
-                                <b>₹{pricePerKg.toFixed(2)} / kg</b>
-                                <small className="block text-xs font-semibold text-primary mt-0.5">Total: ₹{(Number(totalAmount) || 0).toLocaleString('en-IN')}</small>
-                              </div>
-                              {bid.status === 'pending' && (
-                                <div className="market-offer-actions self-start ml-2">
-                                  <button onClick={() => accept(bid)} disabled={isSubmitting} className="accept-button">Accept</button>
-                                  <button onClick={() => openCounter(bid)} disabled={isSubmitting} className="counter-button">Counter</button>
-                                  <button onClick={() => reject(bid)} disabled={isSubmitting} className="reject-button">Reject</button>
-                                </div>
-                              )}
-                            </div>
-                          )})
+                          .map((bid: any, index: number) => (
+                            <BidRow
+                              key={bid.id}
+                              bid={bid}
+                              index={index}
+                              lotQuantityQuintal={lot?.quantity_quintal || 1}
+                              lotLocation={lot?.location || 'Maharashtra'}
+                              isSubmitting={isSubmitting}
+                              onAccept={accept}
+                              onCounter={openCounter}
+                              onReject={reject}
+                            />
+                          ))
                       )}
                     </div>
                   </article>
