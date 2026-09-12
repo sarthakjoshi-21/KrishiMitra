@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Clock3, FileText, IndianRupee, LandPlot, ShieldCheck, Tractor, Umbrella, Wheat } from 'lucide-react'
+import { useLanguage } from './language-context'
+import { t } from '@/lib/translations'
+import type { Language } from '@/lib/translations'
 
 type Props = { onBack: () => void; onLogout: () => void; onNavigate: (tab: string) => void }
 
@@ -12,14 +15,259 @@ const navGroups = [
   { label: 'Post-Harvest', items: [{ label: 'Market & Bids', tab: 'Active Bidding', icon: IndianRupee }, { label: 'Logistics', tab: 'P2P Logistics', icon: Tractor }] },
 ]
 
-const schemes = [
-  { icon: IndianRupee, title: 'PM-KISAN Samman Nidhi', ministry: 'Ministry of Agriculture & Farmers Welfare', category: 'Income Support', description: 'Income support of ₹6,000/year to small and marginal farmer families.', eligibility: 'All farmer families holding cultivable land, subject to exclusion criteria.', benefit: '₹6,000 per year in three instalments' },
-  { icon: ShieldCheck, title: 'Pradhan Mantri Fasal Bima Yojana (PMFBY)', ministry: 'Ministry of Agriculture & Farmers Welfare', category: 'Insurance', description: 'Crop insurance scheme covering natural calamities, pests and diseases.', eligibility: 'All farmers (loanee and non-loanee) cultivating notified crops in notified areas.', benefit: 'Subsidised crop insurance premium (up to 2% for Kharif, 1.5% for Rabi)' },
-  { icon: Tractor, title: 'Sub-Mission on Agricultural Mechanization (SMAM)', ministry: 'Ministry of Agriculture & Farmers Welfare', category: 'Equipment Subsidy', description: 'Subsidy for purchase of agricultural machinery and equipment.', eligibility: 'Individual farmers, FPOs, CHCs. Up to 40–50% subsidy depending on category.', benefit: 'Subsidy up to 50% on machinery cost (up to 80% for SC/ST/small farmers)' },
-  { icon: Umbrella, title: 'Micro Irrigation Fund (MIF)', ministry: 'NABARD', category: 'Infrastructure', description: 'Financial assistance for micro-irrigation (drip/sprinkler) installation.', eligibility: 'Individual farmers, FPOs, state governments.', benefit: 'Subsidy up to 55% on drip/sprinkler systems' },
+// ─── Scheme data keyed by translation prefix ──────────────────────────────────
+
+const schemeKeys = [
+  { prefix: 'schemes.pmkisan', icon: IndianRupee },
+  { prefix: 'schemes.pmfby',   icon: ShieldCheck },
+  { prefix: 'schemes.smam',    icon: Tractor },
+  { prefix: 'schemes.mif',     icon: Umbrella },
+] as const
+
+// ─── Default assistance items (keyed, not hardcoded) ─────────────────────────
+
+const defaultAssistance = [
+  { nameKey: 'schemes.assistance.default1.name', descKey: 'schemes.assistance.default1.desc', status: 'progress'  as const },
+  { nameKey: 'schemes.assistance.default2.name', descKey: 'schemes.assistance.default2.desc', status: 'pending'   as const },
+  { nameKey: 'schemes.assistance.default3.name', descKey: 'schemes.assistance.default3.desc', status: 'complete'  as const },
 ]
 
 export default function SchemesScreen({ onBack, onLogout, onNavigate }: Props) {
+  const { language } = useLanguage()
   const [requested, setRequested] = useState<string[]>([])
-  return <div className="schemes-page min-h-screen bg-background"><header className="topbar"><div className="flex items-center gap-3"><button onClick={() => onNavigate('Overview')} className="secondary-button"><ArrowLeft className="size-4" /> Dashboard</button><div><p className="font-serif text-lg font-bold text-foreground">Schemes & Insurance</p><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-primary">Farmer desk</p></div></div><div className="flex items-center gap-3"><button onClick={onLogout} className="secondary-button">Logout</button></div></header><div className="app-layout"><aside className="sidebar"><div className="farmer-sidebar-nav">{navGroups.map((group) => <div key={group.label} className="farmer-nav-group"><p className="eyebrow">{group.label}</p>{group.items.map(({ label, tab, icon: Icon }) => <button key={label} onClick={() => onNavigate(tab)} className={`side-nav ${tab === 'Schemes & Insurance' ? 'active' : ''}`}><Icon className="size-5" />{label}</button>)}</div>)}</div><div className="farmer-profile"><div className="farmer-avatar">R</div><div><p className="text-sm font-bold text-foreground">Rajesh Patil</p><p className="text-xs text-muted-foreground">Demo Farmer</p></div><button onClick={onLogout} aria-label="Logout" className="ml-auto text-primary"><ArrowRight className="size-5 rotate-180" /></button></div></aside><main className="dashboard-main"><div className="schemes-hero"><div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/20"><Building2 className="size-6 text-white" /></div><div><div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-bold text-white sm:text-3xl">Schemes & Insurance Assistance</h1><span className="rounded-full bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">Assisted workflow</span></div><p className="mt-2 text-sm leading-6 text-white/80">Discover eligible schemes and get assisted by verified CSC/Setu service providers. No direct government API integration.</p></div></div><section className="mt-6"><div className="mb-4 flex items-end justify-between"><div><p className="eyebrow">Benefits for farmers</p><h2 className="mt-1 text-2xl font-bold text-foreground">Available schemes</h2></div><span className="text-sm text-muted-foreground">{schemes.length} programs</span></div><div className="grid gap-5 xl:grid-cols-2">{schemes.map((scheme) => { const Icon = scheme.icon; const isRequested = requested.includes(scheme.title); return <article key={scheme.title} className="scheme-card"><div className="flex items-start gap-4"><div className="scheme-icon"><Icon className="size-6" /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><h3 className="text-lg font-bold text-foreground">{scheme.title}</h3><span className="scheme-tag">{scheme.category}</span></div><p className="mt-1 text-sm text-muted-foreground">{scheme.ministry}</p></div></div><p className="mt-5 text-sm leading-6 text-foreground">{scheme.description}</p><div className="scheme-info"><p className="eyebrow">Eligibility</p><p className="mt-1 text-sm leading-5 text-foreground">{scheme.eligibility}</p></div><div className="scheme-info benefit"><p className="eyebrow">Benefit</p><p className="mt-1 text-sm font-semibold leading-5 text-foreground">{scheme.benefit}</p></div><button onClick={() => setRequested((current) => current.includes(scheme.title) ? current : [...current, scheme.title])} className="primary-button mt-4 w-full">{isRequested ? 'Assistance requested' : 'Apply with assistance'} <ArrowRight className="size-4" /></button></article> })}</div></section><section className="assistance-panel"><div className="mb-5 flex items-center gap-4"><div className="scheme-icon"><FileText className="size-6" /></div><div><h2 className="text-xl font-bold text-foreground">My assistance requests</h2><p className="text-sm text-muted-foreground">Track your ongoing applications</p></div></div>{(requested.length ? requested : ['PM-KISAN Application', 'Crop Insurance Claim', 'Soil Health Card']).map((item, index) => <div key={item} className="request-row"><div><p className="font-bold text-foreground">{item}</p><p className="mt-1 text-sm text-muted-foreground">{requested.length ? 'Assistance request sent to a verified service provider.' : ['Assistance with PM-KISAN registration and document upload.', 'Filing PMFBY claim for pest-induced crop loss in Zone A.', 'Requesting soil sample collection and health card generation.'][index]}</p><p className="mt-1 text-xs text-muted-foreground">Submitted {index + 1} day ago</p></div><span className={`request-status ${index === 0 ? 'progress' : index === 1 ? 'pending' : 'complete'}`}>{index === 0 ? <Clock3 className="size-3" /> : <CheckCircle2 className="size-3" />}{index === 0 ? 'In Progress' : index === 1 ? 'Pending' : 'Completed'}</span></div>)}</section></main></div></div>
+
+  const statusLabel = (idx: number) => {
+    if (idx === 0) return t('schemes.status.inProgress', language)
+    if (idx === 1) return t('schemes.status.pending', language)
+    return t('schemes.status.completed', language)
+  }
+
+  const submittedLabel = (idx: number) =>
+    `${t('schemes.assistance.submittedDaysAgo', language)} ${idx + 1} ${
+      idx === 0 ? t('schemes.assistance.day', language) : t('schemes.assistance.days', language)
+    }`
+
+  return (
+    <div className="schemes-page min-h-screen bg-background">
+
+      {/* ── Topbar ─────────────────────────────────────────────────────────── */}
+      <header className="topbar">
+        <div className="flex items-center gap-3">
+          <button onClick={() => onNavigate('Overview')} className="secondary-button">
+            <ArrowLeft className="size-4" />
+            {t('schemes.topbar.dashboard', language)}
+          </button>
+          <div>
+            <p className="font-serif text-lg font-bold text-foreground">
+              {t('schemes.topbar.title', language)}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-primary">
+              {t('schemes.topbar.eyebrow', language)}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={onLogout} className="secondary-button">
+            {t('schemes.topbar.logout', language)}
+          </button>
+        </div>
+      </header>
+
+      <div className="app-layout">
+
+        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        <aside className="sidebar">
+          <div className="farmer-sidebar-nav">
+            {navGroups.map((group) => (
+              <div key={group.label} className="farmer-nav-group">
+                <p className="eyebrow">{group.label}</p>
+                {group.items.map(({ label, tab, icon: Icon }) => (
+                  <button
+                    key={label}
+                    onClick={() => onNavigate(tab)}
+                    className={`side-nav ${tab === 'Schemes & Insurance' ? 'active' : ''}`}
+                  >
+                    <Icon className="size-5" />{label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="farmer-profile">
+            <div className="farmer-avatar">R</div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Rajesh Patil</p>
+              <p className="text-xs text-muted-foreground">Demo Farmer</p>
+            </div>
+            <button onClick={onLogout} aria-label="Logout" className="ml-auto text-primary">
+              <ArrowRight className="size-5 rotate-180" />
+            </button>
+          </div>
+        </aside>
+
+        {/* ── Main content ─────────────────────────────────────────────────── */}
+        <main className="dashboard-main">
+
+          {/* Hero banner */}
+          <div className="schemes-hero">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+              <Building2 className="size-6 text-white" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold text-white sm:text-3xl">
+                  {t('schemes.hero.title', language)}
+                </h1>
+                <span className="rounded-full bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">
+                  {t('schemes.hero.badge', language)}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-white/80">
+                {t('schemes.hero.description', language)}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Scheme cards ──────────────────────────────────────────────── */}
+          <section className="mt-6">
+            <div className="mb-4 flex items-end justify-between">
+              <div>
+                <p className="eyebrow">{t('schemes.list.eyebrow', language)}</p>
+                <h2 className="mt-1 text-2xl font-bold text-foreground">
+                  {t('schemes.list.title', language)}
+                </h2>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {t('schemes.list.programs', language)}
+              </span>
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-2">
+              {schemeKeys.map(({ prefix, icon: Icon }) => {
+                const titleKey = `${prefix}.title` as Parameters<typeof t>[0]
+                const title = t(titleKey, language)
+                const isRequested = requested.includes(prefix)
+
+                return (
+                  <article key={prefix} className="scheme-card">
+                    <div className="flex items-start gap-4">
+                      <div className="scheme-icon">
+                        <Icon className="size-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="text-lg font-bold text-foreground">{title}</h3>
+                          <span className="scheme-tag">
+                            {t(`${prefix}.category` as Parameters<typeof t>[0], language)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {t(`${prefix}.ministry` as Parameters<typeof t>[0], language)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="mt-5 text-sm leading-6 text-foreground">
+                      {t(`${prefix}.description` as Parameters<typeof t>[0], language)}
+                    </p>
+
+                    <div className="scheme-info">
+                      <p className="eyebrow">{t('schemes.card.eligibilityLabel', language)}</p>
+                      <p className="mt-1 text-sm leading-5 text-foreground">
+                        {t(`${prefix}.eligibility` as Parameters<typeof t>[0], language)}
+                      </p>
+                    </div>
+
+                    <div className="scheme-info benefit">
+                      <p className="eyebrow">{t('schemes.card.benefitLabel', language)}</p>
+                      <p className="mt-1 text-sm font-semibold leading-5 text-foreground">
+                        {t(`${prefix}.benefit` as Parameters<typeof t>[0], language)}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setRequested((curr) =>
+                          curr.includes(prefix) ? curr : [...curr, prefix]
+                        )
+                      }
+                      className="primary-button mt-4 w-full"
+                    >
+                      {isRequested
+                        ? t('schemes.card.requested', language)
+                        : t('schemes.card.apply', language)}{' '}
+                      <ArrowRight className="size-4" />
+                    </button>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+
+          {/* ── Assistance requests panel ─────────────────────────────────── */}
+          <section className="assistance-panel">
+            <div className="mb-5 flex items-center gap-4">
+              <div className="scheme-icon">
+                <FileText className="size-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">
+                  {t('schemes.assistance.title', language)}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t('schemes.assistance.track', language)}
+                </p>
+              </div>
+            </div>
+
+            {/* Show user-requested schemes, or fall back to the three demo items */}
+            {requested.length > 0
+              ? requested.map((prefix, index) => (
+                  <div key={prefix} className="request-row">
+                    <div>
+                      <p className="font-bold text-foreground">
+                        {t(`${prefix}.title` as Parameters<typeof t>[0], language)}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t('schemes.assistance.sent', language)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {submittedLabel(index)}
+                      </p>
+                    </div>
+                    <span className="request-status progress">
+                      <Clock3 className="size-3" />
+                      {t('schemes.status.inProgress', language)}
+                    </span>
+                  </div>
+                ))
+              : defaultAssistance.map(({ nameKey, descKey, status }, index) => (
+                  <div key={nameKey} className="request-row">
+                    <div>
+                      <p className="font-bold text-foreground">
+                        {t(nameKey, language)}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t(descKey, language)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {submittedLabel(index)}
+                      </p>
+                    </div>
+                    <span className={`request-status ${status}`}>
+                      {status === 'progress'
+                        ? <Clock3 className="size-3" />
+                        : <CheckCircle2 className="size-3" />
+                      }
+                      {statusLabel(index)}
+                    </span>
+                  </div>
+                ))
+            }
+          </section>
+
+        </main>
+      </div>
+    </div>
+  )
 }

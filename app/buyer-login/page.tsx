@@ -3,9 +3,10 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Languages, Loader2, Mail, ShieldCheck } from 'lucide-react'
 import { useLanguage, type Language } from '@/components/krishi-mitra/language-context'
 import { signInBuyer, signUpUser, getSession } from '@/lib/actions/auth-actions'
+import { t } from '@/lib/translations'
 
 const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202026-08-28%20010159-SbmrxdxXjUScSHgQ3ehJq2jWqvkG3u.png'
 
@@ -24,11 +25,11 @@ export default function BuyerLoginPage() {
     const password = String(data.get('password') || '')
 
     if (!name) {
-      setAuthError('Please enter your email address.')
+      setAuthError(language === 'hi' ? 'कृपया अपना ईमेल पता दर्ज करें।' : language === 'mr' ? 'कृपया तुमचा ईमेल पत्ता प्रविष्ट करा.' : 'Please enter your email address.')
       return
     }
     if (!password) {
-      setAuthError('Please enter your password.')
+      setAuthError(language === 'hi' ? 'कृपया अपना पासवर्ड दर्ज करें।' : language === 'mr' ? 'कृपया तुमचा पासवर्ड प्रविष्ट करा.' : 'Please enter your password.')
       return
     }
 
@@ -71,15 +72,16 @@ export default function BuyerLoginPage() {
     <main className="min-h-screen bg-background px-5 py-6 flex flex-col justify-between">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="size-4" /> Back to Home
+          <ArrowLeft className="size-4" /> {t('auth.backToHome', language)}
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 shadow-sm">
+          <Languages className="size-4 text-primary" />
           <label className="sr-only" htmlFor="buyer-login-language">Choose language</label>
           <select
             id="buyer-login-language"
             value={language}
             onChange={(event) => setLanguage(event.target.value as Language)}
-            className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground outline-none transition-colors hover:bg-secondary focus:ring-2 focus:ring-ring"
+            className="bg-transparent text-xs font-semibold text-foreground outline-none cursor-pointer"
           >
             <option value="en">English</option>
             <option value="hi">हिन्दी</option>
@@ -105,10 +107,10 @@ export default function BuyerLoginPage() {
         >
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
-              BUYER PORTAL
+              {t('auth.buyerPortal', language)}
             </p>
             <h2 className="mt-1 font-serif text-2xl font-bold text-foreground">
-              {isLogin ? 'Buyer Login' : 'Buyer Sign Up'}
+              {isLogin ? t('auth.buyerLogin', language) : t('auth.buyerSignUp', language)}
             </h2>
           </div>
 
@@ -126,7 +128,7 @@ export default function BuyerLoginPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Login
+              {t('auth.login', language)}
             </button>
             <button
               type="button"
@@ -140,13 +142,13 @@ export default function BuyerLoginPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Sign Up
+              {t('auth.signUp', language)}
             </button>
           </div>
 
           {/* Buyer UI Form Fields: Exactly 2 fields (Email ID & Password) */}
           <label className="flex flex-col gap-2 text-sm font-semibold text-foreground">
-            <span>Email ID</span>
+            <span>{t('auth.buyerEmail', language)}</span>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
               <input
@@ -154,20 +156,20 @@ export default function BuyerLoginPage() {
                 type="email"
                 required
                 className="h-11 w-full rounded-xl border border-border bg-background/80 pl-10 pr-3 font-normal text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                placeholder="Enter your email address"
+                placeholder={t('auth.buyerEmailPlaceholder', language)}
               />
             </div>
           </label>
 
           <label className="flex flex-col gap-2 text-sm font-semibold text-foreground">
-            <span>Password</span>
+            <span>{t('auth.password', language)}</span>
             <div className="relative">
               <input
                 name="password"
                 required
                 type={showPassword ? 'text' : 'password'}
                 className="h-11 w-full rounded-xl border border-border bg-background/80 px-3.5 pr-10 font-normal text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                placeholder="Enter password"
+                placeholder={t('auth.passwordPlaceholder', language)}
               />
               <button
                 type="button"
@@ -190,22 +192,24 @@ export default function BuyerLoginPage() {
             {isPending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {isLogin ? 'Logging in…' : 'Signing up…'}
+                {isLogin ? t('auth.loggingIn', language) : t('auth.signingUp', language)}
               </>
             ) : (
               <>
-                {isLogin ? 'Login' : 'Sign Up'}
+                {isLogin ? t('auth.login', language) : t('auth.signUp', language)}
                 <ArrowRight className="size-4" />
               </>
             )}
           </button>
 
-          <p className="text-center text-xs leading-5 text-muted-foreground">Credentials verified securely via Supabase Auth.</p>
+          <p className="text-center text-xs leading-5 text-muted-foreground">
+            {t('auth.credentialsSecure', language)}
+          </p>
         </form>
       </section>
 
       <footer className="mx-auto flex w-full max-w-6xl items-center justify-center pb-4 text-xs text-muted-foreground">
-        <ShieldCheck className="size-4 mr-1 text-primary" /> Verified buyer portal with end-to-end encryption.
+        <ShieldCheck className="size-4 mr-1 text-primary" /> {t('auth.buyerProtected', language)}
       </footer>
     </main>
   )

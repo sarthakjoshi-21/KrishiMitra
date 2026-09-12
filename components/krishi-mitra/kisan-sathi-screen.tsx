@@ -2,10 +2,13 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { ArrowRight, Bot, Loader2, Send, Sprout, User } from 'lucide-react'
+import { ArrowRight, Bot, Loader2, Mic, MicOff, Send, Sprout, User, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useLanguage } from './language-context'
+import { useAudioRecorder, useBhashiniTTS } from '@/hooks/useBhashiniVoice'
+import { t } from '@/lib/translations'
 
 type Props = { onLogout: () => void; onNavigate: (tab: string) => void }
 
@@ -24,9 +27,77 @@ function getTextContent(message: any): string {
   return ''
 }
 
+// ─── TTS Speaker button per message ──────────────────────────────────────────
+
+function SpeakerButton({
+  text,
+  messageId,
+  activeSpeakingId,
+  onSpeak,
+  onStop,
+  lang,
+}: {
+  text: string
+  messageId: string
+  activeSpeakingId: string | null
+  onSpeak: (id: string, text: string) => void
+  onStop: () => void
+  lang: 'en' | 'hi' | 'mr'
+}) {
+  const isSpeaking = activeSpeakingId === messageId
+  return (
+    <button
+      type="button"
+      aria-label={isSpeaking ? t('kisanSathi.speaker.stop', lang) : t('kisanSathi.speaker.play', lang)}
+      title={isSpeaking ? t('kisanSathi.speaker.stop', lang) : t('kisanSathi.speaker.play', lang)}
+      onClick={() => (isSpeaking ? onStop() : onSpeak(messageId, text))}
+      className={`ml-auto shrink-0 rounded-full p-1.5 transition-colors ${
+        isSpeaking
+          ? 'bg-primary/20 text-primary'
+          : 'text-muted-foreground hover:bg-secondary hover:text-primary'
+      }`}
+    >
+      {isSpeaking ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
+    </button>
+  )
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
   const [input, setInput] = useState('')
+  const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Language context
+  const { language } = useLanguage()
+
+  // Bhashini ASR + NMT
+  const {
+    isRecording,
+    isProcessing: isAsrProcessing,
+    transcript,
+    error: asrError,
+    startRecording,
+    stopRecording,
+    clearTranscript,
+  } = useAudioRecorder(language)
+
+  // Bhashini TTS
+  const { isSpeaking, speak, stop: stopTts } = useBhashiniTTS()
+
+  // When ASR returns a transcript, push it into the textarea
+  useEffect(() => {
+    if (transcript) {
+      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript))
+      clearTranscript()
+    }
+  }, [transcript, clearTranscript])
+
+  // When TTS stops externally, clear the active id
+  useEffect(() => {
+    if (!isSpeaking) setActiveSpeakingId(null)
+  }, [isSpeaking])
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/kisan-sathi' }),
@@ -51,6 +122,34 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
       submit()
     }
   }
+
+  /** Toggle mic recording */
+  const handleMicToggle = async () => {
+    if (isRecording) {
+      stopRecording()
+    } else {
+      await startRecording()
+    }
+  }
+
+  /** Speak an assistant message */
+  const handleSpeak = async (id: string, text: string) => {
+    setActiveSpeakingId(id)
+    await speak(text, language)
+  }
+
+  const handleStop = () => {
+    stopTts()
+    setActiveSpeakingId(null)
+  }
+
+  // Voice hint shown below subheadline when a non-English language is active
+  const voiceHint =
+    language === 'hi'
+      ? t('kisanSathi.voiceHint.hi', language)
+      : language === 'mr'
+      ? t('kisanSathi.voiceHint.mr', language)
+      : ''
 
   return (
     /*
@@ -78,12 +177,16 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
       {/* ── TOPBAR ─────────────────────────────────────── */}
       <header className="topbar shrink-0 z-10">
         <div>
-          <p className="eyebrow">Kisan Sathi</p>
-          <h1 className="text-xl font-bold text-foreground">Kisan Sathi</h1>
+          <p className="eyebrow">{t('kisanSathi.topbar.eyebrow', language)}</p>
+          <h1 className="text-xl font-bold text-foreground">{t('kisanSathi.topbar.title', language)}</h1>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-xs text-muted-foreground sm:inline">Ask in your language</span>
-          <button onClick={onLogout} className="secondary-button">Logout</button>
+          <span className="hidden text-xs text-muted-foreground sm:inline">
+            {t('kisanSathi.topbar.hint', language)}
+          </span>
+          <button onClick={onLogout} className="secondary-button">
+            {t('kisanSathi.topbar.logout', language)}
+          </button>
         </div>
       </header>
 
@@ -97,17 +200,30 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
             className="mb-4 flex items-center gap-2 text-sm font-bold text-primary"
           >
             <ArrowRight className="size-4 rotate-180" />
-            Back to Farmer Desk
+            {t('kisanSathi.sidebar.backButton', language)}
           </button>
 
           <div className="kisan-sathi-side">
             <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
               <Bot className="size-6" />
             </div>
-            <p className="mt-3 font-bold text-foreground">Kisan Sathi</p>
+            <p className="mt-3 font-bold text-foreground">{t('kisanSathi.topbar.title', language)}</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Your practical farming companion for every season.
+              {t('kisanSathi.sidebar.description', language)}
             </p>
+
+            {/* Language indicator */}
+            <div className="mt-4 rounded-xl bg-secondary px-3 py-2 text-xs">
+              <p className="font-semibold text-foreground">
+                {t('kisanSathi.sidebar.voiceLanguage', language)}
+              </p>
+              <p className="mt-0.5 text-muted-foreground">
+                {t('kisanSathi.sidebar.languageName', language)}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground/70">
+                {t('kisanSathi.sidebar.changeHint', language)}
+              </p>
+            </div>
           </div>
         </aside>
 
@@ -123,10 +239,15 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
                 <Sprout className="size-7" />
               </div>
               <div className="min-w-0">
-                <p className="eyebrow">Always here to help</p>
-                <h2 className="mt-1 text-2xl font-bold text-foreground">What can I help you grow today?</h2>
+                <p className="eyebrow">{t('kisanSathi.eyebrow', language)}</p>
+                <h2 className="mt-1 text-2xl font-bold text-foreground">
+                  {t('kisanSathi.headline', language)}
+                </h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Ask about crops, soil, pests, irrigation, weather, schemes, or selling options.
+                  {t('kisanSathi.subheadline', language)}
+                  {voiceHint && (
+                    <span className="ml-1 font-semibold text-primary">{voiceHint}</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -148,14 +269,26 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
               {/* Suggestion chips */}
               {messages.length === 0 && (
                 <div className="kisan-sathi-suggestions">
-                  <button onClick={() => setInput('How can I protect my onion crop from heatwave?')}>
-                    Protect my crop from heatwave
+                  <button
+                    onClick={() =>
+                      setInput(t('kisanSathi.chip.heatwave', language))
+                    }
+                  >
+                    {t('kisanSathi.chip.heatwave', language)}
                   </button>
-                  <button onClick={() => setInput('Which government schemes can I apply for?')}>
-                    Find schemes for my farm
+                  <button
+                    onClick={() =>
+                      setInput(t('kisanSathi.chip.schemes', language))
+                    }
+                  >
+                    {t('kisanSathi.chip.schemes', language)}
                   </button>
-                  <button onClick={() => setInput('How often should I irrigate my crop?')}>
-                    Plan irrigation
+                  <button
+                    onClick={() =>
+                      setInput(t('kisanSathi.chip.irrigation', language))
+                    }
+                  >
+                    {t('kisanSathi.chip.irrigation', language)}
                   </button>
                 </div>
               )}
@@ -165,10 +298,11 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
                 const isUser = message.role === 'user'
                 const text = getTextContent(message)
                 if (!text) return null
+                const msgId = message.id ?? String(index)
 
                 return (
                   <div
-                    key={message.id ?? index}
+                    key={msgId}
                     className={`chat-bubble ${isUser ? 'user' : 'assistant'}`}
                     style={{ maxWidth: '85%' }}
                   >
@@ -183,7 +317,7 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
                       • Assistant messages — rendered through ReactMarkdown + remark-gfm
                         so bold, lists, line-breaks, tables all render correctly
                     */}
-                    <div className="min-w-0 max-w-full overflow-hidden text-sm leading-relaxed">
+                    <div className="min-w-0 max-w-full overflow-hidden text-sm leading-relaxed flex-1">
                       {isUser ? (
                         <p className="whitespace-pre-wrap break-words">{text}</p>
                       ) : (
@@ -236,6 +370,18 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
                         </div>
                       )}
                     </div>
+
+                    {/* Speaker button — only on assistant messages */}
+                    {!isUser && (
+                      <SpeakerButton
+                        text={text}
+                        messageId={msgId}
+                        activeSpeakingId={activeSpeakingId}
+                        onSpeak={handleSpeak}
+                        onStop={handleStop}
+                        lang={language}
+                      />
+                    )}
                   </div>
                 )
               })}
@@ -246,8 +392,32 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
                   <span className="chat-avatar shrink-0"><Bot className="size-4" /></span>
                   <div className="flex items-center gap-2">
                     <Loader2 className="size-4 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">Kisan Sathi is thinking…</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('kisanSathi.thinking', language)}
+                    </span>
                   </div>
+                </div>
+              )}
+
+              {/* ASR processing indicator */}
+              {isAsrProcessing && (
+                <div className="chat-bubble assistant" style={{ maxWidth: '85%' }}>
+                  <span className="chat-avatar shrink-0"><Mic className="size-4" /></span>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="size-4 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      {language !== 'en'
+                        ? t('kisanSathi.processingTranslating', language)
+                        : t('kisanSathi.processing', language)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* ASR error banner */}
+              {asrError && (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-xs text-destructive">
+                  Voice error: {asrError}
                 </div>
               )}
             </div>
@@ -258,10 +428,48 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="Ask Kisan Sathi anything about farming…"
-                aria-label="Ask Kisan Sathi"
+                placeholder={t('kisanSathi.inputPlaceholder', language)}
+                aria-label={t('kisanSathi.inputPlaceholder', language)}
                 rows={2}
               />
+
+              {/* Mic button — Bhashini ASR */}
+              <button
+                type="button"
+                onClick={handleMicToggle}
+                disabled={isAsrProcessing}
+                aria-label={
+                  isAsrProcessing
+                    ? t('kisanSathi.mic.processing', language)
+                    : isRecording
+                    ? t('kisanSathi.mic.stop', language)
+                    : t('kisanSathi.mic.start', language)
+                }
+                title={
+                  isAsrProcessing
+                    ? t('kisanSathi.mic.processing', language)
+                    : isRecording
+                    ? t('kisanSathi.mic.stop', language)
+                    : t('kisanSathi.mic.start', language)
+                }
+                className={`action-button shrink-0 transition-colors ${
+                  isRecording
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : isAsrProcessing
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
+                }`}
+              >
+                {isAsrProcessing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : isRecording ? (
+                  <MicOff className="size-4" />
+                ) : (
+                  <Mic className="size-4" />
+                )}
+              </button>
+
+              {/* Send button */}
               <button
                 onClick={submit}
                 disabled={!input.trim() || isLoading}

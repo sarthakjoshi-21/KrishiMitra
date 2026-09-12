@@ -18,5 +18,19 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { colorScheme: 'light', themeColor: '#f7faf9' }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className="bg-background"><body className={`${dmSans.variable} ${notoSerif.variable} antialiased`}><LanguageProvider><TranslationLayer />{children}</LanguageProvider>{process.env.NODE_ENV === 'production' && <Analytics />}</body></html>
+  return (
+    <html lang="en" className="bg-background">
+      <head>
+        <meta charSet="utf-8" />
+      </head>
+      <body className={`${dmSans.variable} ${notoSerif.variable} antialiased`}>
+        <LanguageProvider>
+          <TranslationLayer />
+          {children}
+        </LanguageProvider>
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
 }
+

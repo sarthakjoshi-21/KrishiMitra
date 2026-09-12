@@ -3,9 +3,10 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, ShieldCheck, Sprout } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Languages, Loader2, ShieldCheck, Sprout } from 'lucide-react'
 import { useLanguage, type Language } from '@/components/krishi-mitra/language-context'
 import { signInFarmer, signUpUser, getSession } from '@/lib/actions/auth-actions'
+import { t } from '@/lib/translations'
 
 const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202026-08-28%20010159-SbmrxdxXjUScSHgQ3ehJq2jWqvkG3u.png'
 
@@ -24,11 +25,11 @@ export default function FarmerLoginPage() {
     const password = String(data.get('password') || '')
 
     if (!name) {
-      setAuthError('Please enter your Farmer ID.')
+      setAuthError(language === 'hi' ? 'कृपया अपना किसान आईडी दर्ज करें।' : language === 'mr' ? 'कृपया तुमचा शेतकरी आयडी प्रविष्ट करा.' : 'Please enter your Farmer ID.')
       return
     }
     if (!password) {
-      setAuthError('Please enter your password.')
+      setAuthError(language === 'hi' ? 'कृपया अपना पासवर्ड दर्ज करें।' : language === 'mr' ? 'कृपया तुमचा पासवर्ड प्रविष्ट करा.' : 'Please enter your password.')
       return
     }
 
@@ -70,15 +71,16 @@ export default function FarmerLoginPage() {
     <main className="min-h-screen bg-background px-5 py-6 flex flex-col justify-between">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="size-4" /> Back to Home
+          <ArrowLeft className="size-4" /> {t('auth.backToHome', language)}
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 shadow-sm">
+          <Languages className="size-4 text-primary" />
           <label className="sr-only" htmlFor="farmer-login-language">Choose language</label>
           <select
             id="farmer-login-language"
             value={language}
             onChange={(event) => setLanguage(event.target.value as Language)}
-            className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground outline-none transition-colors hover:bg-secondary focus:ring-2 focus:ring-ring"
+            className="bg-transparent text-xs font-semibold text-foreground outline-none cursor-pointer"
           >
             <option value="en">English</option>
             <option value="hi">हिन्दी</option>
@@ -104,10 +106,10 @@ export default function FarmerLoginPage() {
         >
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
-              FARMER PORTAL
+              {t('auth.farmerPortal', language)}
             </p>
             <h2 className="mt-1 font-serif text-2xl font-bold text-foreground">
-              {isLogin ? 'Farmer Login' : 'Farmer Sign Up'}
+              {isLogin ? t('auth.farmerLogin', language) : t('auth.farmerSignUp', language)}
             </h2>
           </div>
 
@@ -125,7 +127,7 @@ export default function FarmerLoginPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Login
+              {t('auth.login', language)}
             </button>
             <button
               type="button"
@@ -139,33 +141,33 @@ export default function FarmerLoginPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Sign Up
+              {t('auth.signUp', language)}
             </button>
           </div>
 
           {/* Farmer UI Form Fields: Exactly 2 fields (Farmer ID & Password) */}
           <label className="flex flex-col gap-2 text-sm font-semibold text-foreground">
-            <span>Farmer ID</span>
+            <span>{t('auth.farmerId', language)}</span>
             <div className="relative">
               <Sprout className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
               <input
                 name="name"
                 required
                 className="h-11 w-full rounded-xl border border-border bg-background/80 pl-10 pr-3 font-normal text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                placeholder="Enter Farmer ID (e.g. MH-PUN-001)"
+                placeholder={t('auth.farmerIdPlaceholder', language)}
               />
             </div>
           </label>
 
           <label className="flex flex-col gap-2 text-sm font-semibold text-foreground">
-            <span>Password</span>
+            <span>{t('auth.password', language)}</span>
             <div className="relative">
               <input
                 name="password"
                 required
                 type={showPassword ? 'text' : 'password'}
                 className="h-11 w-full rounded-xl border border-border bg-background/80 px-3.5 pr-10 font-normal text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                placeholder="Enter password"
+                placeholder={t('auth.passwordPlaceholder', language)}
               />
               <button
                 type="button"
@@ -188,22 +190,24 @@ export default function FarmerLoginPage() {
             {isPending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {isLogin ? 'Logging in…' : 'Signing up…'}
+                {isLogin ? t('auth.loggingIn', language) : t('auth.signingUp', language)}
               </>
             ) : (
               <>
-                {isLogin ? 'Login' : 'Sign Up'}
+                {isLogin ? t('auth.login', language) : t('auth.signUp', language)}
                 <ArrowRight className="size-4" />
               </>
             )}
           </button>
 
-          <p className="text-center text-xs leading-5 text-muted-foreground">Credentials verified securely via Supabase Auth.</p>
+          <p className="text-center text-xs leading-5 text-muted-foreground">
+            {t('auth.credentialsSecure', language)}
+          </p>
         </form>
       </section>
 
       <footer className="mx-auto flex w-full max-w-6xl items-center justify-center pb-4 text-xs text-muted-foreground">
-        <ShieldCheck className="size-4 mr-1 text-primary" /> Your farm data is protected with secure encryption.
+        <ShieldCheck className="size-4 mr-1 text-primary" /> {t('auth.dataProtected', language)}
       </footer>
     </main>
   )

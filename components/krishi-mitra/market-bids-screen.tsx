@@ -3,13 +3,16 @@
 export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, IndianRupee, Loader2, LocateFixed, Map as MapIcon, MapPin, Minus, PlusCircle, TrendingUp, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, Check, IndianRupee, Languages, Loader2, MapPin, Minus, PlusCircle } from 'lucide-react'
 import { getBidsForFarmer, updateBidStatus } from '@/lib/actions/bid-actions'
 import { getFarmerListings } from '@/lib/actions/crop-actions'
 import type { Bid } from '@/types/database'
 import InteractiveMap from '@/components/InteractiveMap'
-import { getCurrentUserPosition, formatDistance } from '@/lib/geo-utils'
+import { getCurrentUserPosition } from '@/lib/geo-utils'
 import BidRow from './bid-row'
+import { FarmerSidebar } from './farmer-sidebar'
+import { useLanguage } from './language-context'
+import { t } from '@/lib/translations'
 
 type Props = { onLogout: () => void; onNavigate: (tab: string) => void }
 
@@ -26,6 +29,7 @@ function Trend({ type, text }: { type: 'up' | 'down' | 'stable'; text: string })
 }
 
 export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
+  const { language, setLanguage } = useLanguage()
   const [view, setView] = useState<'bids' | 'map' | 'market'>('bids')
   const [listings, setListings] = useState<any[]>([])
   const [bids, setBids] = useState<Bid[]>([])
@@ -185,15 +189,27 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     <div className="market-page min-h-screen bg-background">
       <header className="topbar">
         <div className="flex items-center gap-4">
-          <button onClick={() => onNavigate('Overview')} className="secondary-button"><ArrowLeft className="size-4" /> Dashboard</button>
+          <button onClick={() => onNavigate('Overview')} className="secondary-button"><ArrowLeft className="size-4" /> {t('nav.dashboard', language)}</button>
           <div><p className="font-serif text-lg font-bold text-foreground">कृषि-मित्र</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Krishi Mitra</p></div>
           <span className="hidden rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-primary md:inline-flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-green-500 animate-pulse"></span> GPS &amp; OpenStreetMap Synced
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => onNavigate('Overview')} className="primary-button hidden sm:inline-flex"><PlusCircle className="size-4" /> Publish Crop</button>
-          <button onClick={onLogout} className="secondary-button">Logout</button>
+          <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 shadow-sm">
+            <Languages className="size-4 text-primary" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as 'en' | 'hi' | 'mr')}
+              className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
+            >
+              <option value="en">English</option>
+              <option value="hi">हिन्दी</option>
+              <option value="mr">मराठी</option>
+            </select>
+          </div>
+          <button onClick={() => onNavigate('Overview')} className="primary-button hidden sm:inline-flex"><PlusCircle className="size-4" /> {t('marketBids.publishCrop', language)}</button>
+          <button onClick={onLogout} className="secondary-button">{t('nav.logout', language)}</button>
         </div>
       </header>
 
@@ -204,28 +220,22 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
       )}
 
       <div className="app-layout">
-        <aside className="sidebar">
-          <div className="farmer-sidebar-nav">
-            <button onClick={() => onNavigate('Overview')} className="side-nav"><ArrowRight className="size-5 rotate-180" />Dashboard</button>
-            <button onClick={() => onNavigate('Active Bidding')} className="side-nav active"><IndianRupee className="size-5" />Market &amp; Bids</button>
-            <button onClick={() => onNavigate('P2P Logistics')} className="side-nav"><TrendingUp className="size-5" />Logistics</button>
-          </div>
-        </aside>
+        <FarmerSidebar activeTab="Market & Bids" onNavigate={onNavigate} onLogout={onLogout} />
 
         <main className="dashboard-main mx-auto flex max-w-6xl flex-col gap-5">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="eyebrow">Post-harvest &amp; Sales</p>
-              <h1 className="mt-2 text-3xl font-bold text-foreground">Market &amp; Bids</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Manage your published crop lots, locate buyers on OpenStreetMap, and review incoming offers in real time.</p>
+              <p className="eyebrow">{t('marketBids.eyebrow', language)}</p>
+              <h1 className="mt-2 text-3xl font-bold text-foreground">{t('marketBids.title', language)}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{t('marketBids.subtitle', language)}</p>
             </div>
-            <button onClick={() => onNavigate('Overview')} className="primary-button sm:hidden"><PlusCircle className="size-4" /> Publish New Crop</button>
+            <button onClick={() => onNavigate('Overview')} className="primary-button sm:hidden"><PlusCircle className="size-4" /> {t('marketBids.publishNewCrop', language)}</button>
           </div>
 
           <div className="market-tabs">
-            <button className={view === 'bids' ? 'active' : ''} onClick={() => setView('bids')}>Published Crops &amp; Active Bids</button>
-            <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')}>🗺️ Interactive Map &amp; Bidders</button>
-            <button className={view === 'market' ? 'active' : ''} onClick={() => setView('market')}>Mandi Trends</button>
+            <button className={view === 'bids' ? 'active' : ''} onClick={() => setView('bids')}>{t('marketBids.tabBids', language)}</button>
+            <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')}>{t('marketBids.tabMap', language)}</button>
+            <button className={view === 'market' ? 'active' : ''} onClick={() => setView('market')}>{t('marketBids.tabMandi', language)}</button>
           </div>
 
           {view === 'map' ? (
@@ -240,21 +250,21 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                 zoom={10}
               />
               <div className="rounded-2xl border border-border bg-card p-4 text-xs">
-                <p className="font-bold text-foreground mb-1">🗺️ Live OpenStreetMap View</p>
-                <p className="text-muted-foreground">Green markers represent your active crop lots. Orange markers represent buyers who have submitted live bids. Click any pin to inspect details.</p>
+                <p className="font-bold text-foreground mb-1">{t('marketBids.tabMap', language)}</p>
+                <p className="text-muted-foreground">{language === 'hi' ? 'हरे मार्कर आपके सक्रिय फसल लॉट दर्शाते हैं। नारंगी मार्कर खरीदारों को दर्शाते हैं जिन्होंने लाइव बोलियां लगाई हैं। विवरण देखने के लिए किसी भी पिन पर क्लिक करें।' : language === 'mr' ? 'हिरवे मार्कर तुमचे सक्रिय पीक लॉट दर्शवतात. नारंगी मार्कर खरेदीदारांना दर्शवतात ज्यांनी थेट बोली लावली आहे. तपशील तपासण्यासाठी कोणत्याही पिनवर क्लिक करा.' : 'Green markers represent your active crop lots. Orange markers represent buyers who have submitted live bids. Click any pin to inspect details.'}</p>
               </div>
             </section>
           ) : view === 'bids' ? (
             <section className="market-listings">
               {loading ? (
-                <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Loading published crops…</div>
+                <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> {t('dashboard.marketplace.loading', language)}</div>
               ) : displayLots.length === 0 ? (
                 <div className="py-20 text-center text-sm text-muted-foreground rounded-2xl border border-dashed border-border bg-card/40 p-8">
                   <IndianRupee className="mx-auto size-8 text-muted-foreground/60 mb-2" />
-                  <p className="font-semibold text-foreground">No crop lots published yet</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Publish a crop lot from your Dashboard to list it on the marketplace and receive live bids from verified buyers.</p>
+                  <p className="font-semibold text-foreground">{t('marketBids.noLots', language)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('marketBids.noLotsDesc', language)}</p>
                   <button onClick={() => onNavigate('Overview')} className="mt-4 primary-button">
-                    <PlusCircle className="size-4" /> Publish Your First Crop Lot
+                    <PlusCircle className="size-4" /> {t('marketBids.publishFirstLot', language)}
                   </button>
                 </div>
               ) : (
@@ -264,21 +274,21 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                       <div>
                         <div className="flex items-center gap-3">
                           <h2>{lot?.crop_name}</h2>
-                          <span className="market-status live-bidding">Grade {lot?.grade || 'A'} · {lot?.is_live ? 'Live' : 'Sold'}</span>
+                          <span className="market-status live-bidding">Grade {lot?.grade || 'A'} · {lot?.is_live ? (language === 'hi' ? 'लाइव' : language === 'mr' ? 'थेट' : 'Live') : (language === 'hi' ? 'बिका हुआ' : language === 'mr' ? 'विकले' : 'Sold')}</span>
                         </div>
-                        <p><MapPin className="size-3" />{lot?.location} · {lot?.quantity_quintal} Q ({Number(lot?.quantity_quintal || 1) * 100} kg) · Asking: ₹{(Number(lot?.asking_price_per_quintal || 0) / 100).toFixed(2)}/kg</p>
+                        <p><MapPin className="size-3" />{lot?.location} · {lot?.quantity_quintal} Q ({Number(lot?.quantity_quintal || 1) * 100} kg) · {t('marketBids.asking', language)}: ₹{(Number(lot?.asking_price_per_quintal || 0) / 100).toFixed(2)}/kg</p>
                       </div>
-                      <Trend type="up" text={`${lotBids.length} offer${lotBids.length !== 1 ? 's' : ''}`} />
+                      <Trend type="up" text={`${lotBids.length} ${language === 'hi' ? 'प्रस्ताव' : language === 'mr' ? 'बोली' : lotBids.length === 1 ? 'offer' : 'offers'}`} />
                     </div>
 
                     <div className="market-offers">
                       <div className="flex items-center justify-between">
-                        <p className="eyebrow">Buyer offers for this lot</p>
-                        <span className="text-xs text-muted-foreground">{lotBids.length} offer${lotBids.length !== 1 ? 's' : ''}</span>
+                        <p className="eyebrow">{t('marketBids.buyerOffers', language)}</p>
+                        <span className="text-xs text-muted-foreground">{lotBids.length} {language === 'hi' ? 'प्रस्ताव' : language === 'mr' ? 'बोली' : lotBids.length === 1 ? 'offer' : 'offers'}</span>
                       </div>
                       {lotBids.length === 0 ? (
                         <div className="rounded-xl bg-secondary/40 p-4 text-center text-xs text-muted-foreground">
-                          No buyer bids placed yet on this lot. Your listing is broadcasted to buyers on the marketplace.
+                          {t('marketBids.noBidsOnLot', language)}
                         </div>
                       ) : (
                         lotBids
@@ -311,10 +321,10 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
               <div className="price-trends-card rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center justify-between pb-4 border-b border-border">
                   <div>
-                    <h2 className="text-xl font-bold">State Mandi Live Index</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Real-time modal prices across APMC markets</p>
+                    <h2 className="text-xl font-bold">{t('marketBids.stateMandiIndex', language)}</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('marketBids.mandiIndexDesc', language)}</p>
                   </div>
-                  <span className="live-dot font-semibold text-xs text-primary">● Live</span>
+                  <span className="live-dot font-semibold text-xs text-primary">● {t('marketBids.live', language)}</span>
                 </div>
                 <div className="mt-4 space-y-3">
                   {prices.map((p) => (
@@ -340,12 +350,12 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
       {counterModal && (
         <div className="modal-backdrop" onClick={() => setCounterModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <p className="eyebrow">Direct Negotiation</p>
-            <h2 className="mt-2 font-serif text-2xl font-bold">Counter-Bid</h2>
-            <p className="text-xs text-muted-foreground mt-1">Buyer: {counterModal.buyer?.full_name || 'Buyer'} · Current Bid: ₹{Number(counterModal.bid_price_per_kg || 0).toFixed(2)}/kg</p>
+            <p className="eyebrow">{t('marketBids.directNegotiation', language)}</p>
+            <h2 className="mt-2 font-serif text-2xl font-bold">{t('marketBids.counterBid', language)}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{t('marketBids.buyer', language)}: {counterModal.buyer?.full_name || 'Buyer'} · {t('marketBids.currentBid', language)}: ₹{Number(counterModal.bid_price_per_kg || 0).toFixed(2)}/kg</p>
             <div className="mt-4">
               <label className="field">
-                <span>Your Counter-Offer (₹ per kg)</span>
+                <span>{t('marketBids.yourCounterOffer', language)}</span>
                 <input
                   type="number"
                   step="0.1"
@@ -357,9 +367,9 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
               </label>
             </div>
             <div className="mt-6 flex gap-3">
-              <button onClick={() => setCounterModal(null)} className="secondary-button flex-1">Cancel</button>
+              <button onClick={() => setCounterModal(null)} className="secondary-button flex-1">{t('common.cancel', language)}</button>
               <button onClick={submitCounter} disabled={isSubmitting} className="primary-button flex-1">
-                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Sending…</> : 'Send Counter-Offer'}
+                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> {t('marketBids.sending', language)}</> : t('marketBids.sendCounter', language)}
               </button>
             </div>
           </div>

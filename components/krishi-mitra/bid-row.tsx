@@ -2,6 +2,8 @@
 
 import React from 'react'
 import type { Bid } from '@/types/database'
+import { useLanguage } from './language-context'
+import { t } from '@/lib/translations'
 
 interface BidRowProps {
   bid: Bid
@@ -24,6 +26,8 @@ export default function BidRow({
   onCounter,
   onReject,
 }: BidRowProps) {
+  const { language } = useLanguage()
+
   const pricePerKg = bid.bid_price_per_kg
     ? Number(bid.bid_price_per_kg)
     : bid.bid_price_per_quintal
@@ -44,14 +48,14 @@ export default function BidRow({
             {index + 1}
           </span>
           <h4 className="text-sm font-bold text-foreground">
-            {bid.buyer?.full_name || 'Verified Buyer'}
+            {bid.buyer?.full_name || t('common.verifiedBuyer', language)}
           </h4>
         </div>
         <p className="text-xs text-muted-foreground">
-          Quantity: <span className="font-semibold text-foreground">{lotQuantityQuintal} Quintals ({lotQuantityQuintal * 100} kg)</span>
+          {t('bidRow.quantity', language)}: <span className="font-semibold text-foreground">{lotQuantityQuintal} {t('common.quintals', language)} ({lotQuantityQuintal * 100} {t('common.kg', language)})</span>
         </p>
         <p className="text-xs text-muted-foreground">
-          Location: <span className="text-foreground">{bid.buyer?.location || lotLocation}</span>
+          {t('bidRow.location', language)}: <span className="text-foreground">{bid.buyer?.location || lotLocation}</span>
         </p>
         {bid.buyer_notes && (
           <p className="mt-1 text-xs text-muted-foreground bg-secondary/50 p-1.5 rounded italic">
@@ -63,10 +67,10 @@ export default function BidRow({
       {/* 2. Center Column (Price & Status) */}
       <div className="flex flex-col items-start md:items-center min-w-[150px]">
         <span className="text-base font-bold text-primary">
-          ₹{pricePerKg.toFixed(2)} / kg
+          ₹{pricePerKg.toFixed(2)} / {t('common.kg', language)}
         </span>
         <span className="text-xs text-muted-foreground font-medium">
-          Total: ₹{(Number(totalAmount) || 0).toLocaleString('en-IN')}
+          {t('bidRow.total', language)}: ₹{(Number(totalAmount) || 0).toLocaleString('en-IN')}
         </span>
         <span
           className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
@@ -80,12 +84,12 @@ export default function BidRow({
           }`}
         >
           {status === 'accepted'
-            ? '✓ Offer accepted'
+            ? t('bidRow.statusAccepted', language)
             : status === 'rejected'
-              ? '✗ Offer rejected'
+              ? t('bidRow.statusRejected', language)
               : status === 'counter'
-                ? `↕ Counter: ₹${(Number(bid.counter_price) || 0).toLocaleString('en-IN')}`
-                : 'Pending review'}
+                ? `${t('bidRow.statusCounter', language)}: ₹${(Number(bid.counter_price) || 0).toLocaleString('en-IN')}`
+                : t('bidRow.statusPending', language)}
         </span>
       </div>
 
@@ -97,7 +101,7 @@ export default function BidRow({
           disabled={isSubmitting}
           className="rounded-md bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
         >
-          Accept
+          {t('bidRow.accept', language)}
         </button>
         <button
           type="button"
@@ -105,7 +109,7 @@ export default function BidRow({
           disabled={isSubmitting}
           className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 disabled:opacity-50"
         >
-          Counter
+          {t('bidRow.counter', language)}
         </button>
         <button
           type="button"
@@ -113,7 +117,7 @@ export default function BidRow({
           disabled={isSubmitting}
           className="rounded-md bg-red-50 hover:bg-red-100 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors dark:bg-red-950/60 dark:hover:bg-red-900/40 dark:text-red-300 disabled:opacity-50"
         >
-          Reject
+          {t('bidRow.reject', language)}
         </button>
       </div>
     </div>

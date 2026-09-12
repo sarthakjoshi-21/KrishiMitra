@@ -11,6 +11,7 @@ import { getCurrentUserPosition } from '@/lib/geo-utils'
 import type { AppNotification, CropLot } from '@/types/database'
 import LoginScreen from './login-screen'
 import { LanguageProvider, useLanguage } from './language-context'
+import { t } from '@/lib/translations'
 import LogisticsScreen from './logistics-screen'
 import SchemesScreen from './schemes-screen'
 import ResourcesScreen from './resources-screen'
@@ -20,6 +21,7 @@ import KisanSathiScreen from './kisan-sathi-screen'
 import IrrigationScreen from './irrigation-screen'
 import MarketBidsScreen from './market-bids-screen'
 import MyCropScreen from './my-crop-screen'
+import CropHealthScreen from './crop-health-screen'
 import BuyerDashboardScreen from './buyer-dashboard-screen'
 import BuyerProfileScreen from './buyer-profile-screen'
 import MyBidsScreen from './my-bids-screen'
@@ -34,7 +36,7 @@ const FALLBACK_LOTS: CropLot[] = [
 const farmerNavGroups = [{ label: 'Farmer Desk', items: farmerNavItems }]
 
 function Brand() {
-  return <div className="flex items-center gap-3"><div className="brand-mark"><Sprout className="size-6" /></div><div><p className="font-serif text-lg font-bold tracking-tight text-foreground">कृषि-मित्र</p><p className="-mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Krishi Mitra</p></div></div>
+  return <div className="flex items-center gap-3"><div className="brand-mark"><Sprout className="size-6" /></div><div><p className="font-serif text-lg font-bold tracking-tight text-foreground">कृषी-मित्र</p><p className="-mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Krishi Mitra</p></div></div>
 }
 
 export function Language() { const { language, setLanguage } = useLanguage(); return <label className="flex items-center" htmlFor="site-language"><span className="sr-only">Choose website language</span><select id="site-language" aria-label="Choose website language" value={language} onChange={(event) => setLanguage(event.target.value as 'en' | 'hi' | 'mr')} className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground outline-none hover:bg-secondary focus:ring-2 focus:ring-ring"><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label> }
@@ -44,6 +46,7 @@ function Metric({ icon: Icon, label, value, detail, tone = 'teal' }: { icon: typ
 }
 
 function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) => void }) {
+  const { language } = useLanguage()
   const cropImage = lot.image_url || 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80'
   return (
     <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -54,7 +57,7 @@ function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) =
         </div>
         {lot.pesticide_safe_flag && (
           <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
-            <ShieldCheck className="size-3" /> Safe
+            <ShieldCheck className="size-3" /> {t('common.safe', language)}
           </div>
         )}
       </div>
@@ -67,7 +70,7 @@ function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) =
         </div>
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-[11px] text-muted-foreground">Asking price</p>
+            <p className="text-[11px] text-muted-foreground">{t('marketBids.asking', language)}</p>
             <p className="text-lg font-bold text-primary">
               ₹{lot.asking_price_per_quintal.toLocaleString('en-IN')}
               <span className="ml-1 text-xs font-normal text-muted-foreground">/ Q</span>
@@ -75,11 +78,11 @@ function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) =
           </div>
           <p className="text-right text-xs text-muted-foreground">
             {lot.quantity_quintal} Q<br />
-            by {lot.farmer?.full_name ?? 'Farmer'}
+            by {lot.farmer?.full_name ?? (language === 'hi' ? 'किसान' : language === 'mr' ? 'शेतकरी' : 'Farmer')}
           </p>
         </div>
         <button onClick={() => onOffer(lot)} className="flex h-10 items-center justify-center gap-2 rounded-xl bg-secondary text-sm font-bold text-foreground transition hover:bg-primary hover:text-primary-foreground">
-          Make an offer <ArrowRight className="size-4" />
+          {language === 'hi' ? 'प्रस्ताव दें' : language === 'mr' ? 'बोली लावा' : 'Make an offer'} <ArrowRight className="size-4" />
         </button>
       </div>
     </article>
@@ -91,8 +94,9 @@ function Login({ onEnter }: { onEnter: (role: 'farmer' | 'buyer') => void }) {
 }
 
 function FarmerProfileMenu({ profilePhoto, userName, onPhotoChange, onLogout }: { profilePhoto: string | null; userName: string; onPhotoChange: (photo: string) => void; onLogout: () => void }) {
+  const { language } = useLanguage()
   const [open, setOpen] = useState(false)
-  return <div className="relative"><button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" className="farmer-profile-trigger"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><span className="hidden text-left sm:block"><strong>{userName}</strong><small>Farmer</small></span><ChevronDown className={`size-4 transition ${open ? 'rotate-180' : ''}`} /></button>{open && <div role="menu" className="farmer-profile-menu"><div className="farmer-profile-detail"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><div><p>{userName}</p><small>Farmer</small></div></div><label role="menuitem" className="farmer-profile-action"><Camera className="size-4" /> Add profile picture<input type="file" accept="image/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoChange(URL.createObjectURL(file)) }} /></label><button role="menuitem" onClick={onLogout} className="farmer-profile-action logout"><ArrowRight className="size-4 rotate-180" /> Logout</button></div>}</div>
+  return <div className="relative"><button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" className="farmer-profile-trigger"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><span className="hidden text-left sm:block"><strong>{userName}</strong><small>{t('common.farmer', language)}</small></span><ChevronDown className={`size-4 transition ${open ? 'rotate-180' : ''}`} /></button>{open && <div role="menu" className="farmer-profile-menu"><div className="farmer-profile-detail"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><div><p>{userName}</p><small>{t('common.farmer', language)}</small></div></div><label role="menuitem" className="farmer-profile-action"><Camera className="size-4" /> {t('common.addProfilePicture', language)}<input type="file" accept="image/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoChange(URL.createObjectURL(file)) }} /></label><button role="menuitem" onClick={onLogout} className="farmer-profile-action logout"><ArrowRight className="size-4 rotate-180" /> {t('nav.logout', language)}</button></div>}</div>
 }
 
 function FarmerSidebar({ tab, onNavigate, profilePhoto, userName, onLogout }: { tab: string; onNavigate: (tab: string) => void; profilePhoto: string | null; userName: string; onLogout: () => void }) { return <aside className="sidebar"><div className="farmer-sidebar-nav">{farmerNavGroups.map((group) => <div key={group.label} className="farmer-nav-group"><p className="eyebrow">{group.label}</p>{group.items.map(({ label, tab: target, icon: Icon }) => <button key={label} onClick={() => onNavigate(target)} className={`side-nav ${tab === target ? 'active' : ''}`}><Icon className="size-5" />{label}</button>)}</div>)}</div><div className="farmer-profile"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><div><p className="text-sm font-bold text-foreground">{userName}</p><p className="text-xs text-muted-foreground">Farmer</p></div><button onClick={onLogout} aria-label="Logout" className="ml-auto text-primary"><ArrowRight className="size-5 rotate-180" /></button></div></aside> }
@@ -275,6 +279,9 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
     'My Progress': { title: 'My Progress', description: 'See your seasonal milestones and farm health indicators.', items: ['Soil health check · Complete', 'Crop quality verification · In review', 'Payout readiness · 82%'] },
     'P2P Logistics': { title: 'P2P Logistics', description: 'Coordinate pickup, transport, and delivery with trusted partners.', items: ['Pickup scheduled · Nashik to Pune', '2 verified transporters nearby', 'Next dispatch window · Tomorrow'] },
   }
+  // ─── Language ─────────────────────────────────────────────────────────────
+  const { language } = useLanguage()
+
   if (tab === 'P2P Logistics') return <LogisticsScreen onBack={() => setTab('Overview')} onLogout={onLogout} onNavigate={setTab} />
   if (tab === 'Schemes & Insurance') return <SchemesScreen onBack={() => setTab('Overview')} onLogout={onLogout} onNavigate={setTab} />
   if (tab === 'Resources') return <ResourcesScreen onLogout={onLogout} onNavigate={setTab} />
@@ -283,7 +290,9 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
   if (tab === 'Irrigation') return <IrrigationScreen onLogout={onLogout} onNavigate={setTab} />
   if (tab === 'Market & Bids') return <MarketBidsScreen onLogout={onLogout} onNavigate={setTab} />
   if (tab === 'My Crop') return <MyCropScreen onLogout={onLogout} onNavigate={setTab} />
-  
+  if (tab === 'Weather') return <WeatherScreen onLogout={onLogout} onNavigate={setTab} />
+  if (tab === 'Crop Health') return <CropHealthScreen onLogout={onLogout} onNavigate={setTab} />
+
   return (
     <div className="min-h-screen bg-background">
       {toast && (
@@ -295,7 +304,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
         <div className="flex items-center gap-8">
           <Brand />
           <div className="hidden items-center gap-2 rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-primary md:flex">
-            <span className="size-2 rounded-full bg-primary" /> Online &amp; synced
+            <span className="size-2 rounded-full bg-primary" /> {t('dashboard.onlineSynced', language)}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -311,12 +320,12 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
             {notifOpen && (
               <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-border bg-card p-4 shadow-xl animate-in fade-in zoom-in-95">
                 <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Farmer Notifications</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('common.notifications', language)}</p>
                   <button onClick={() => setNotifOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
                 </div>
                 <div className="mt-2 max-h-64 overflow-y-auto space-y-2">
                   {notifications.length === 0 ? (
-                    <p className="text-xs text-muted-foreground py-4 text-center">No new notifications</p>
+                    <p className="text-xs text-muted-foreground py-4 text-center">{t('common.noNotifications', language)}</p>
                   ) : (
                     notifications.map((n) => (
                       <div
@@ -332,7 +341,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                         <p>{n.message}</p>
                         <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
                           <span>{new Date(n.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
-                          <span className="text-primary font-bold">View Bids →</span>
+                          <span className="text-primary font-bold">{t('common.viewBids', language)} →</span>
                         </div>
                       </div>
                     ))
@@ -349,74 +358,47 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
         </div>
       </header>
       <div className="app-layout">
-        <button type="button" aria-label="Close navigation menu" onClick={() => setMobileMenuOpen(false)} className={`mobile-menu-backdrop ${mobileMenuOpen ? 'is-visible' : ''}`} />
-        <aside className={`sidebar ${mobileMenuOpen ? 'mobile-visible' : 'mobile-hidden'}`}>
-          <div className="flex items-center justify-between md:hidden">
-            <p className="eyebrow">Navigation</p>
-            <button type="button" aria-label="Close navigation menu" onClick={() => setMobileMenuOpen(false)} className="icon-button">
-              <X className="size-5" />
-            </button>
-          </div>
-          <div className="farmer-sidebar-nav">
-            {farmerNavGroups.map((group) => (
-              <div key={group.label} className="farmer-nav-group">
-                <p className="eyebrow">{group.label}</p>
-                {group.items.map(({ label, tab: target, icon: Icon }) => (
-                  <button key={label} onClick={() => { setTab(target); setMobileMenuOpen(false) }} className={`side-nav ${tab === target ? 'active' : ''}`}>
-                    <Icon className="size-5" />{label}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="farmer-profile">
-            <label className="farmer-avatar farmer-avatar-upload" title="Add profile photo">
-              {profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}
-              <input type="file" accept="image/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) setProfilePhoto(URL.createObjectURL(file)) }} />
-              <span className="farmer-camera"><Camera className="size-3" /></span>
-            </label>
-            <div>
-              <p className="text-sm font-bold text-foreground">{userName}</p>
-              <p className="text-xs text-muted-foreground">Farmer</p>
-            </div>
-            <button onClick={onLogout} aria-label="Logout" className="ml-auto text-primary">
-              <ArrowRight className="size-5 rotate-180" />
-            </button>
-          </div>
-        </aside>
+        <SharedFarmerSidebar
+          activeTab={tab}
+          onNavigate={(target) => { setTab(target); setMobileMenuOpen(false); }}
+          profilePhoto={profilePhoto}
+          onLogout={onLogout}
+        />
         <main className="dashboard-main">
           <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="eyebrow">Tuesday, 29 August 2026</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Good morning, {userName.split(' ')[0]} <span className="text-primary">.</span></h1>
-              <p className="mt-2 text-sm text-muted-foreground">Your farm is looking healthy. Here&apos;s your complete picture.</p>
+              <p className="eyebrow">{t('dashboard.date', language)}</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+                {t('dashboard.greeting', language)}, {userName.split(' ')[0]} <span className="text-primary">.</span>
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">{t('dashboard.subline', language)}</p>
             </div>
-            <button className="secondary-button"><Volume2 className="size-4" /> Read dashboard aloud</button>
+            <button className="secondary-button"><Volume2 className="size-4" /> {t('dashboard.readAloud', language)}</button>
           </div>
           <div className="metrics-grid">
-            <Metric icon={Leaf} label="Active listings" value="3" detail="2 receiving bids" />
-            <Metric icon={IndianRupee} label="Best offer today" value="₹3,560" detail="Basmati Rice · +4.1%" tone="gold" />
-            <Metric icon={Truck} label="Logistics saved" value="₹1,240" detail="This month · 2 pooled trips" tone="blue" />
-            <Metric icon={ShieldCheck} label="Safety status" value="All clear" detail="Last checked 2 days ago" tone="green" />
+            <Metric icon={Leaf}        label={t('dashboard.metric.activeListings', language)}  value="3"      detail={t('dashboard.metric.activeListingsDetail', language)} />
+            <Metric icon={IndianRupee} label={t('dashboard.metric.bestOffer', language)}        value="₹3,560" detail={t('dashboard.metric.bestOfferDetail', language)}     tone="gold" />
+            <Metric icon={Truck}       label={t('dashboard.metric.logisticsSaved', language)}   value="₹1,240" detail={t('dashboard.metric.logisticsDetail', language)}     tone="blue" />
+            <Metric icon={ShieldCheck} label={t('dashboard.metric.safetyStatus', language)}     value={t('dashboard.metric.allClear', language)} detail={t('dashboard.metric.safetyDetail', language)} tone="green" />
           </div>
           <div className="mt-7 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
             <section className="panel overflow-hidden">
               <div className="panel-header">
                 <div>
-                  <p className="eyebrow">Smart listing</p>
-                  <h2 className="panel-title">Add farm crop &amp; AI analysis</h2>
+                  <p className="eyebrow">{t('dashboard.listing.eyebrow', language)}</p>
+                  <h2 className="panel-title">{t('dashboard.listing.title', language)}</h2>
                 </div>
-                <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold text-primary">Step 1 of 3</span>
+                <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold text-primary">{t('common.step', language)} 1 {t('common.of', language)} 3</span>
               </div>
               <div className="p-5">
                 <div className="upload-zone">
                   <div className="rounded-2xl bg-secondary p-3 text-primary"><Upload className="size-6" /></div>
                   <div>
-                    <p className="text-sm font-bold">Drop a crop photo here</p>
-                    <p className="mt-1 text-xs text-muted-foreground">or use camera JPG/PNG up to 10MB</p>
+                    <p className="text-sm font-bold">{t('dashboard.listing.dropzone', language)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{t('dashboard.listing.dropzoneHint', language)}</p>
                   </div>
                   <label className="ml-auto flex cursor-pointer items-center justify-center rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-secondary">
-                    Browse
+                    {language === 'hi' ? 'फ़ाइल चुनें' : language === 'mr' ? 'फाइल निवडा' : 'Browse'}
                     <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) setCropPhoto(URL.createObjectURL(file)) }} />
                   </label>
                 </div>
@@ -427,19 +409,19 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                 )}
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <label className="field">
-                    <span>Crop name</span>
+                    <span>{t('dashboard.listing.cropName', language)}</span>
                     <input defaultValue="Basmati Rice" ref={cropNameRef} />
                   </label>
                   <label className="field">
-                    <span>Available quantity (Quintal)</span>
+                    <span>{t('dashboard.listing.quantity', language)}</span>
                     <input defaultValue="240" ref={qtyRef} type="number" />
                   </label>
                   <label className="field">
-                    <span>Asking price (₹ / Quintal)</span>
+                    <span>{t('dashboard.listing.price', language)}</span>
                     <input defaultValue="3420" ref={priceRef} type="number" />
                   </label>
                   <label className="field">
-                    <span>Farm location</span>
+                    <span>{t('dashboard.listing.location', language)}</span>
                     <div className="input-with-icon">
                       <MapPin className="size-4" />
                       <input defaultValue="Nashik, Maharashtra" ref={locationRef} />
@@ -451,32 +433,32 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                     <div className="rounded-xl bg-primary p-2 text-primary-foreground"><Sprout className="size-5" /></div>
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-bold">AI smart analysis</p>
-                        <span className="rounded-full bg-card px-2 py-0.5 text-[10px] font-bold text-primary">94% confidence</span>
+                        <p className="text-sm font-bold">{language === 'hi' ? 'एआई स्मार्ट विश्लेषण' : language === 'mr' ? 'एआय स्मार्ट विश्लेषण' : 'AI smart analysis'}</p>
+                        <span className="rounded-full bg-card px-2 py-0.5 text-[10px] font-bold text-primary">94% {language === 'hi' ? 'सटीकता' : language === 'mr' ? 'विश्वासार्हता' : 'confidence'}</span>
                       </div>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">Grade A quality · Moisture 11.8% · No visible issues detected</p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">{language === 'hi' ? 'ग्रेड A गुणवत्ता · नमी 11.8% · कोई दृश्य दोष नहीं पाया गया' : language === 'mr' ? 'ग्रेड A गुणवत्ता · ओलावा 11.8% · कोणताही दोष आढळला नाही' : 'Grade A quality · Moisture 11.8% · No visible issues detected'}</p>
                     </div>
                     <button className="text-muted-foreground hover:text-primary"><Volume2 className="size-4" /></button>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="tag"><Check className="size-3" /> Safe to sell</span>
-                    <span className="tag">Net estimate ₹3,280</span>
-                    <span className="tag">Mandi ₹3,420</span>
+                    <span className="tag"><Check className="size-3" /> {t('cropHealth.safeToSell', language)}</span>
+                    <span className="tag">{language === 'hi' ? 'अनुमानित शुद्ध ₹3,280' : language === 'mr' ? 'अंदाजे नफा ₹3,280' : 'Net estimate ₹3,280'}</span>
+                    <span className="tag">{language === 'hi' ? 'मंडी ₹3,420' : language === 'mr' ? 'बाजार भाव ₹3,420' : 'Mandi ₹3,420'}</span>
                   </div>
-                  <p className="mt-3 text-[10px] text-muted-foreground">AI estimate — not a substitute for expert inspection · Farmer-declared, not lab verified</p>
+                  <p className="mt-3 text-[10px] text-muted-foreground">{language === 'hi' ? 'एआई अनुमान — विशेषज्ञ निरीक्षण का विकल्प नहीं · किसान द्वारा घोषित, प्रयोगशाला सत्यापित नहीं' : language === 'mr' ? 'एआय अंदाज — तज्ज्ञ निरीक्षणाचा पर्याय नाही · शेतकऱ्याने घोषित केलेले, प्रयोगशाळा सत्यापित नाही' : 'AI estimate — not a substitute for expert inspection · Farmer-declared, not lab verified'}</p>
                 </div>
                 <form onSubmit={handlePublish} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <label className="flex items-center gap-3 text-sm font-semibold">
-                    <input type="checkbox" defaultChecked className="size-4 accent-[var(--primary)]" ref={needsTransportRef} /> Need transport?
+                    <input type="checkbox" defaultChecked className="size-4 accent-[var(--primary)]" ref={needsTransportRef} /> {t('dashboard.listing.needsTransport', language)}
                   </label>
                   <div>
                     <button type="submit" disabled={isPublishing} className="primary-button">
                       {publishStatus === 'success' ? (
-                        <><Check className="size-4" /> Published to Marketplace</>
+                        <><Check className="size-4" /> {t('dashboard.listing.published', language)}</>
                       ) : isPublishing ? (
-                        <><Loader2 className="size-4 animate-spin" /> Publishing…</>
+                        <><Loader2 className="size-4 animate-spin" /> {t('dashboard.listing.publishing', language)}</>
                       ) : (
-                        <>Publish to marketplace <ArrowRight className="size-4" /></>
+                        <>{t('dashboard.listing.publishBtn', language)} <ArrowRight className="size-4" /></>
                       )}
                     </button>
                     {publishError && <p className="mt-2 text-xs font-semibold text-destructive">{publishError}</p>}
@@ -487,10 +469,10 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
             <section className="panel">
               <div className="panel-header">
                 <div>
-                  <p className="eyebrow">Live activity</p>
-                  <h2 className="panel-title">Your active bids</h2>
+                  <p className="eyebrow">{t('dashboard.bids.eyebrow', language)}</p>
+                  <h2 className="panel-title">{t('dashboard.bids.title', language)}</h2>
                 </div>
-                <button onClick={() => setTab('Active Bidding')} className="text-xs font-bold text-primary">View all</button>
+                <button onClick={() => setTab('Market & Bids')} className="text-xs font-bold text-primary">{t('dashboard.bids.viewAll', language)}</button>
               </div>
               <div className="flex flex-col gap-1 p-3">
                 {recentBids.map((bid) => (
@@ -510,8 +492,8 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                 ))}
                 <div className="mt-3 rounded-xl bg-secondary p-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold">Basmati Rice price trend</span>
-                    <span className="font-bold text-primary">↑ Rising</span>
+                    <span className="font-semibold">{t('dashboard.bids.trend', language)}</span>
+                    <span className="font-bold text-primary">{t('dashboard.bids.rising', language)}</span>
                   </div>
                   <div className="mt-3 flex h-12 items-end gap-1.5">
                     {[24,31,27,37,33,44,40,48,46,52,49,57].map((h, i) => (
@@ -525,18 +507,18 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
           <section className="mt-6">
             <div className="mb-4 flex items-end justify-between">
               <div>
-                <p className="eyebrow">Marketplace</p>
-                <h2 className="panel-title">What&apos;s moving near you</h2>
+                <p className="eyebrow">{t('dashboard.marketplace.eyebrow', language)}</p>
+                <h2 className="panel-title">{t('dashboard.marketplace.title', language)}</h2>
               </div>
-              <button onClick={() => setTab('Market & Bids')} className="secondary-button"><Search className="size-4" /> Browse lots</button>
+              <button onClick={() => setTab('Market & Bids')} className="secondary-button"><Search className="size-4" /> {t('dashboard.marketplace.browse', language)}</button>
             </div>
             {loadingLots ? (
               <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin" /> Loading marketplace…
+                <Loader2 className="size-5 animate-spin" /> {t('dashboard.marketplace.loading', language)}
               </div>
             ) : liveLots.length === 0 ? (
               <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-                No active listings found in database. Add a crop above to create a listing.
+                {t('dashboard.marketplace.empty', language)}
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -554,19 +536,19 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
             <button onClick={() => setOfferOpen(false)} className="absolute right-4 top-4 text-muted-foreground">
               <X className="size-5" />
             </button>
-            <p className="eyebrow">Make an offer</p>
-            <h2 className="mt-2 font-serif text-2xl font-bold">Bid on {selectedLot.crop_name}</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Asking: ₹{selectedLot.asking_price_per_quintal.toLocaleString('en-IN')} / Q · {selectedLot.quantity_quintal} Q available</p>
+            <p className="eyebrow">{language === 'hi' ? 'प्रस्ताव दें' : language === 'mr' ? 'बोली लावा' : 'Make an offer'}</p>
+            <h2 className="mt-2 font-serif text-2xl font-bold">{language === 'hi' ? `${selectedLot.crop_name} पर बोली लगाएं` : language === 'mr' ? `${selectedLot.crop_name} वर बोली लावा` : `Bid on ${selectedLot.crop_name}`}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{t('marketBids.asking', language)}: ₹{selectedLot.asking_price_per_quintal.toLocaleString('en-IN')} / Q · {selectedLot.quantity_quintal} Q {language === 'hi' ? 'उपलब्ध' : language === 'mr' ? 'उपलब्ध' : 'available'}</p>
             <label className="field mt-6">
-              <span>Your bid price (₹ / Quintal)</span>
+              <span>{language === 'hi' ? 'आपकी बोली मूल्य (₹ / क्विंटल)' : language === 'mr' ? 'तुमची बोली किंमत (₹ / क्विंटल)' : 'Your bid price (₹ / Quintal)'}</span>
               <input defaultValue={selectedLot.asking_price_per_quintal} />
             </label>
             <label className="field mt-4">
-              <span>Preferred delivery date</span>
+              <span>{language === 'hi' ? 'पसंदीदा डिलीवरी तिथि' : language === 'mr' ? 'पसंतीची डिलिव्हरी तारीख' : 'Preferred delivery date'}</span>
               <input type="date" defaultValue="2026-09-12" />
             </label>
-            <button onClick={() => { setOfferOpen(false); setToast('Offer submitted successfully!') }} className="primary-button mt-6 w-full">
-              Submit offer <ArrowRight className="size-4" />
+            <button onClick={() => { setOfferOpen(false); setToast(language === 'hi' ? 'प्रस्ताव सफलतापूर्वक सबमिट किया गया!' : language === 'mr' ? 'बोली यशस्वीरित्या सबमिट केली!' : 'Offer submitted successfully!') }} className="primary-button mt-6 w-full">
+              {language === 'hi' ? 'प्रस्ताव भेजें' : language === 'mr' ? 'बोली सबमिट करा' : 'Submit offer'} <ArrowRight className="size-4" />
             </button>
           </div>
         </div>
@@ -574,6 +556,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
     </div>
   )
 }
+
 
 export default function KrishiMitraApp() {
   const [role, setRole] = useState<'login' | 'farmer' | 'buyer'>('login')
