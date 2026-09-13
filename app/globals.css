@@ -130,3 +130,56 @@
 .chat-bubble.user .prose { color: inherit; }
 .chat-bubble.user .prose code { @apply bg-white/20; }
 
+/* ── Farmer Sidebar Scrolling & Layout Fixes ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.farmer-sidebar-shared {
+  @apply flex flex-col justify-between w-full lg:w-64 shrink-0 border-b border-border bg-card p-3 sm:p-4 lg:sticky lg:top-0 lg:h-[calc(100vh-72px)] lg:max-h-[calc(100vh-72px)] lg:border-b-0 lg:border-r overflow-hidden;
+}
+
+.farmer-sidebar-shared .farmer-sidebar-nav {
+  @apply flex-1 min-h-0 overflow-y-auto flex flex-col gap-1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.farmer-sidebar-shared .farmer-sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.farmer-sidebar-shared .side-nav {
+  @apply flex items-center gap-3 rounded-xl px-3.5 py-2 text-left text-sm font-semibold text-foreground transition hover:bg-secondary hover:text-primary leading-snug;
+}
+
+.app-layout > .farmer-sidebar-shared {
+  display: flex !important;
+}
+
+.weather-page .app-layout,
+.resources-page .app-layout,
+.community-page .app-layout,
+.schemes-page .app-layout,
+.market-page .app-layout,
+.logistics-page .app-layout {
+  display: flex !important;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .weather-page .app-layout,
+  .resources-page .app-layout,
+  .community-page .app-layout,
+  .schemes-page .app-layout,
+  .market-page .app-layout,
+  .logistics-page .app-layout {
+    flex-direction: row !important;
+  }
+}
+
+

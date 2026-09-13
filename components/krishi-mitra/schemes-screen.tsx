@@ -5,15 +5,9 @@ import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Clock3, FileText, India
 import { useLanguage } from './language-context'
 import { t } from '@/lib/translations'
 import type { Language } from '@/lib/translations'
+import { FarmerSidebar } from './farmer-sidebar'
 
 type Props = { onBack: () => void; onLogout: () => void; onNavigate: (tab: string) => void }
-
-const navGroups = [
-  { label: 'Overview', items: [{ label: 'Dashboard', tab: 'Overview', icon: LandPlot }] },
-  { label: 'In-Season', items: [{ label: 'My Crop', tab: 'My Listings', icon: Wheat }, { label: 'Crop Health', tab: 'My Progress', icon: ShieldCheck }, { label: 'Irrigation', tab: 'Plan & Grow', icon: Umbrella }, { label: 'Weather', tab: 'Digital Desk', icon: Building2 }, { label: 'AI Assistant', tab: 'Digital Desk', icon: FileText }] },
-  { label: 'Services', items: [{ label: 'Resources', tab: 'Digital Desk', icon: FileText }, { label: 'Community', tab: 'Digital Desk', icon: Building2 }, { label: 'Schemes & Insurance', tab: 'Schemes & Insurance', icon: ShieldCheck }] },
-  { label: 'Post-Harvest', items: [{ label: 'Market & Bids', tab: 'Active Bidding', icon: IndianRupee }, { label: 'Logistics', tab: 'P2P Logistics', icon: Tractor }] },
-]
 
 // ─── Scheme data keyed by translation prefix ──────────────────────────────────
 
@@ -76,34 +70,7 @@ export default function SchemesScreen({ onBack, onLogout, onNavigate }: Props) {
       <div className="app-layout">
 
         {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-        <aside className="sidebar">
-          <div className="farmer-sidebar-nav">
-            {navGroups.map((group) => (
-              <div key={group.label} className="farmer-nav-group">
-                <p className="eyebrow">{group.label}</p>
-                {group.items.map(({ label, tab, icon: Icon }) => (
-                  <button
-                    key={label}
-                    onClick={() => onNavigate(tab)}
-                    className={`side-nav ${tab === 'Schemes & Insurance' ? 'active' : ''}`}
-                  >
-                    <Icon className="size-5" />{label}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="farmer-profile">
-            <div className="farmer-avatar">R</div>
-            <div>
-              <p className="text-sm font-bold text-foreground">Rajesh Patil</p>
-              <p className="text-xs text-muted-foreground">Demo Farmer</p>
-            </div>
-            <button onClick={onLogout} aria-label="Logout" className="ml-auto text-primary">
-              <ArrowRight className="size-5 rotate-180" />
-            </button>
-          </div>
-        </aside>
+        <FarmerSidebar activeTab="Schemes & Insurance" onNavigate={onNavigate} onLogout={onLogout} />
 
         {/* ── Main content ─────────────────────────────────────────────────── */}
         <main className="dashboard-main">

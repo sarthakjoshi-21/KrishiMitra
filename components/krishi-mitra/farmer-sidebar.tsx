@@ -36,36 +36,31 @@ export function FarmerSidebar({ activeTab, onNavigate, profilePhoto, onLogout }:
   const { language } = useLanguage()
 
   return (
-    <aside className="sidebar farmer-sidebar-shared">
-      <nav className="farmer-sidebar-nav" aria-label="Farmer navigation">
-        <p className="eyebrow">{t('nav.farmerDesk', language)}</p>
+    <aside className="sidebar farmer-sidebar-shared flex flex-col h-screen lg:h-[calc(100vh-72px)] max-h-screen lg:max-h-[calc(100vh-72px)] overflow-hidden lg:sticky lg:top-0">
+      <div className="eyebrow px-3 pt-1 pb-2 shrink-0">{t('nav.farmerDesk', language)}</div>
+      
+      {/* Scrollable navigation container with overflow-y-auto, flex-1, and hidden scrollbar */}
+      <nav
+        className="farmer-sidebar-nav flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-1 pb-4 no-scrollbar"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        aria-label="Farmer navigation"
+      >
         {farmerNavItems.map(({ label, tab, icon: Icon }) => (
           <button
             type="button"
             key={tab}
             onClick={() => onNavigate(tab)}
-            className={`side-nav ${activeTab === tab ? 'active' : ''}`}
+            className={`side-nav !py-2 !px-3.5 !gap-3 text-sm font-semibold text-left transition rounded-xl ${
+              activeTab === tab ? 'active' : ''
+            }`}
           >
-            <Icon className="size-5" />
-            {t(navTranslationKeys[tab] || label, language)}
+            <Icon className="size-4 sm:size-5 shrink-0" />
+            <span className="leading-snug flex-1 break-words">
+              {t(navTranslationKeys[tab] || label, language)}
+            </span>
           </button>
         ))}
       </nav>
-      <div className="farmer-profile">
-        <span className="farmer-avatar">
-          {profilePhoto ? <img src={profilePhoto} alt="Farmer profile" className="size-full rounded-full object-cover" /> : 'R'}
-        </span>
-        <div>
-          <p className="text-sm font-bold text-foreground">Rajesh Patil</p>
-          <p className="text-xs text-muted-foreground">{t('common.demoFarmer', language)}</p>
-        </div>
-        {onLogout && (
-          <button type="button" onClick={onLogout} aria-label={t('nav.logout', language)} className="ml-auto text-primary">
-            {t('nav.logout', language)}
-          </button>
-        )}
-      </div>
     </aside>
   )
 }
-
