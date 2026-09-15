@@ -223,6 +223,14 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
         <FarmerSidebar activeTab="Market & Bids" onNavigate={onNavigate} onLogout={onLogout} />
 
         <main className="dashboard-main mx-auto flex max-w-6xl flex-col gap-5">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="eyebrow">{t('marketBids.eyebrow', language)}</p>

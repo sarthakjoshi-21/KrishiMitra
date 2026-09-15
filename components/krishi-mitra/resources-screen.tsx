@@ -66,6 +66,14 @@ export default function ResourcesScreen({ onLogout, onNavigate }: Props) {
       <div className="app-layout">
         <FarmerSidebar activeTab="Resources" onNavigate={onNavigate} onLogout={onLogout} />
         <main className="dashboard-main">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
           <div className="resources-hero">
             <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white">
               <Warehouse className="size-7" />

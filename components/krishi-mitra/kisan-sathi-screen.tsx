@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { ArrowRight, Bot, Loader2, Mic, MicOff, Send, Sprout, User, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bot, Loader2, Mic, MicOff, Send, Sprout, User, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -229,6 +229,14 @@ export default function KisanSathiScreen({ onLogout, onNavigate }: Props) {
 
         {/* ── MAIN COLUMN ───────────────────────────────── */}
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden p-4 lg:p-8">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
 
           {/* Chat card */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-sm">

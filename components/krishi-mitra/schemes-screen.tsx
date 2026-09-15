@@ -74,6 +74,14 @@ export default function SchemesScreen({ onBack, onLogout, onNavigate }: Props) {
 
         {/* ── Main content ─────────────────────────────────────────────────── */}
         <main className="dashboard-main">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
 
           {/* Hero banner */}
           <div className="schemes-hero">

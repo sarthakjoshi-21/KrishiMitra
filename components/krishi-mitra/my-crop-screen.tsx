@@ -48,6 +48,14 @@ export default function MyCropScreen({ onNavigate }: Props) {
           </div>
         </header>
         <main className="dashboard-main mx-auto max-w-4xl">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
           <div className="mb-6">
             <p className="eyebrow">{t('myCrop.startWithCrop', language)}</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">{t('myCrop.tellUsGrowing', language)}</h1>
@@ -153,6 +161,14 @@ export default function MyCropScreen({ onNavigate }: Props) {
         </button>
       </header>
       <main className="dashboard-main mx-auto max-w-6xl">
+        <button
+          type="button"
+          onClick={() => onNavigate('Overview')}
+          className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+        >
+          <ArrowLeft className="size-4" />
+          {t('nav.backToDashboard', language)}
+        </button>
         <section className="crop-hero">
           <div className="crop-hero-icon"><Sprout className="size-8" /></div>
           <div className="min-w-0">

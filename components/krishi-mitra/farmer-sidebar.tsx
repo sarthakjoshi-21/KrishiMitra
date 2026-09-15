@@ -32,11 +32,40 @@ const navTranslationKeys: Record<string, string> = {
   'P2P Logistics': 'nav.logistics',
 }
 
-export function FarmerSidebar({ activeTab, onNavigate, profilePhoto, onLogout }: { activeTab: string; onNavigate: (tab: string) => void; profilePhoto?: string | null; onLogout?: () => void }) {
+interface FarmerSidebarProps {
+  activeTab: string
+  onNavigate: (tab: string) => void
+  profilePhoto?: string | null
+  onLogout?: () => void
+  isSidebarOpen?: boolean
+  setIsSidebarOpen?: (open: boolean) => void
+  isMobileMenuOpen?: boolean
+  setIsMobileMenuOpen?: (open: boolean) => void
+}
+
+export function FarmerSidebar({
+  activeTab,
+  onNavigate,
+  profilePhoto,
+  onLogout,
+  isSidebarOpen,
+  setIsSidebarOpen,
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+}: FarmerSidebarProps) {
   const { language } = useLanguage()
+  const open = isSidebarOpen ?? isMobileMenuOpen ?? false
+  const closeSidebar = () => {
+    setIsSidebarOpen?.(false)
+    setIsMobileMenuOpen?.(false)
+  }
 
   return (
-    <aside className="sidebar farmer-sidebar-shared flex flex-col h-screen lg:h-[calc(100vh-72px)] max-h-screen lg:max-h-[calc(100vh-72px)] overflow-hidden lg:sticky lg:top-0">
+    <aside
+      className={`sidebar farmer-sidebar-shared fixed inset-y-0 left-0 z-50 w-64 !w-64 transform transition-transform duration-300 ease-in-out flex flex-col h-screen max-h-screen overflow-hidden bg-card border-r border-border ${
+        open ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       <div className="eyebrow px-3 pt-1 pb-2 shrink-0">{t('nav.farmerDesk', language)}</div>
       
       {/* Scrollable navigation container with overflow-y-auto, flex-1, and hidden scrollbar */}
@@ -49,7 +78,10 @@ export function FarmerSidebar({ activeTab, onNavigate, profilePhoto, onLogout }:
           <button
             type="button"
             key={tab}
-            onClick={() => onNavigate(tab)}
+            onClick={() => {
+              onNavigate(tab)
+              closeSidebar()
+            }}
             className={`side-nav !py-2 !px-3.5 !gap-3 text-sm font-semibold text-left transition rounded-xl ${
               activeTab === tab ? 'active' : ''
             }`}

@@ -196,6 +196,26 @@ export const translations: TranslationMap = {
     hi: 'सुप्रभात',
     mr: 'सुप्रभात',
   },
+  'dashboard.morning': {
+    en: 'Good morning',
+    hi: 'सुप्रभात',
+    mr: 'सुप्रभात',
+  },
+  'dashboard.afternoon': {
+    en: 'Good afternoon',
+    hi: 'शुभ दोपहर',
+    mr: 'शुभ दुपार',
+  },
+  'dashboard.evening': {
+    en: 'Good evening',
+    hi: 'शुभ संध्या',
+    mr: 'शुभ संध्याकाळ',
+  },
+  'dashboard.night': {
+    en: 'Good night',
+    hi: 'शुभ रात्रि',
+    mr: 'शुभ रात्री',
+  },
   'dashboard.subline': {
     en: "Your farm is looking healthy. Here's your complete picture.",
     hi: 'आपका खेत स्वस्थ दिख रहा है। यहाँ आपकी पूरी जानकारी है।',

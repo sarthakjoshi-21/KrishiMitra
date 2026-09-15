@@ -71,6 +71,14 @@ export default function LogisticsScreen({ onBack, onLogout, onNavigate }: Props)
         <FarmerSidebar activeTab="P2P Logistics" onNavigate={onNavigate} onLogout={onLogout} />
 
         <main className="dashboard-main mx-auto flex max-w-6xl flex-col gap-5">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
           <section className="logistics-hero">
             <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/15">
               <Truck className="size-7" />

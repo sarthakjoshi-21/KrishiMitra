@@ -99,6 +99,7 @@ function FarmerProfileMenu({ profilePhoto, userName, onPhotoChange, onLogout }: 
 
 function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: () => void }) {
   const router = useRouter()
+  const { language } = useLanguage()
   const [tab, setTab] = useState('Overview')
   const [hasNotification, setHasNotification] = useState(false)
   const [notificationPopped, setNotificationPopped] = useState(false)
@@ -112,10 +113,33 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
   const [selectedLot, setSelectedLot] = useState<CropLot | null>(null)
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null)
   const [cropPhoto, setCropPhoto] = useState<string | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [greetingKey, setGreetingKey] = useState('dashboard.morning')
+  const [liveDate, setLiveDate] = useState('')
   const [liveLots, setLiveLots] = useState<CropLot[]>(FALLBACK_LOTS)
   const [loadingLots, setLoadingLots] = useState(true)
   const [recentBids, setRecentBids] = useState([{name:'GreenField Foods', place:'Mumbai · 48 min ago', bid:'₹35.60/kg', delta:'+4.1%'},{name:'Harvest Hub', place:'Pune · 2 hrs ago', bid:'₹35.10/kg', delta:'+2.6%'},{name:'Bharat Grains Co.', place:'Nashik · 4 hrs ago', bid:'₹34.80/kg', delta:'+1.8%'}])
+
+  useEffect(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) setGreetingKey('dashboard.morning')
+    else if (hour < 17) setGreetingKey('dashboard.afternoon')
+    else if (hour < 21) setGreetingKey('dashboard.evening')
+    else setGreetingKey('dashboard.night')
+
+    // Map your app's language code to native browser locales
+    const localeMap: Record<string, string> = { en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN' }
+    const activeLocale = localeMap[language] || 'en-IN'
+
+    const formattedDate = new Intl.DateTimeFormat(activeLocale, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date())
+
+    setLiveDate(formattedDate.toUpperCase())
+  }, [language])
 
   useEffect(() => {
     if (toast) {
@@ -275,8 +299,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
     'My Progress': { title: 'My Progress', description: 'See your seasonal milestones and farm health indicators.', items: ['Soil health check · Complete', 'Crop quality verification · In review', 'Payout readiness · 82%'] },
     'P2P Logistics': { title: 'P2P Logistics', description: 'Coordinate pickup, transport, and delivery with trusted partners.', items: ['Pickup scheduled · Nashik to Pune', '2 verified transporters nearby', 'Next dispatch window · Tomorrow'] },
   }
-  // ─── Language ─────────────────────────────────────────────────────────────
-  const { language } = useLanguage()
+  // ─── Early screen returns ───────────────────────────────────────────────────
 
   if (tab === 'P2P Logistics') return <LogisticsScreen onBack={() => setTab('Overview')} onLogout={onLogout} onNavigate={setTab} />
   if (tab === 'Schemes & Insurance') return <SchemesScreen onBack={() => setTab('Overview')} onLogout={onLogout} onNavigate={setTab} />
@@ -348,24 +371,43 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
           </div>
           <Language />
           <FarmerProfileMenu profilePhoto={profilePhoto} userName={userName} onPhotoChange={setProfilePhoto} onLogout={onLogout} />
-          <button onClick={() => setMobileMenuOpen(true)} aria-label="Open navigation menu" aria-expanded={mobileMenuOpen} className="icon-button md:hidden">
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen((prev) => !prev)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={isSidebarOpen}
+            className="icon-button"
+          >
             <Menu className="size-5" />
           </button>
         </div>
       </header>
+      {/* Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <div className="app-layout">
         <SharedFarmerSidebar
           activeTab={tab}
-          onNavigate={(target) => { setTab(target); setMobileMenuOpen(false); }}
+          onNavigate={(target) => {
+            setTab(target)
+            setIsSidebarOpen(false)
+          }}
           profilePhoto={profilePhoto}
           onLogout={onLogout}
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
         />
         <main className="dashboard-main">
           <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="eyebrow">{t('dashboard.date', language)}</p>
+              <p className="eyebrow">{liveDate || '...'}</p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-                {t('dashboard.greeting', language)}, {userName.split(' ')[0]} <span className="text-primary">.</span>
+                {t(greetingKey, language)}, {userName} <span className="text-primary">.</span>
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">{t('dashboard.subline', language)}</p>
             </div>

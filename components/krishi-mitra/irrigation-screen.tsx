@@ -81,7 +81,7 @@ export default function IrrigationScreen({ onLogout, onNavigate }: Props) {
             <button
               type="button"
               onClick={() => onNavigate('Overview')}
-              className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-primary/80"
+              className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
             >
               <ArrowLeft className="size-4" />{t('nav.backToDashboard', language)}
             </button>

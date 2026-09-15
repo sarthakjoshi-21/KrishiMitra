@@ -64,6 +64,14 @@ export default function WeatherScreen({ onLogout, onNavigate }: Props) {
         <FarmerSidebar activeTab="Weather" onNavigate={onNavigate} onLogout={onLogout} />
         <main className="dashboard-main">
           <div className="weather-stack">
+            <button
+              type="button"
+              onClick={() => onNavigate('Overview')}
+              className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+            >
+              <ArrowLeft className="size-4" />
+              {t('nav.backToDashboard', language)}
+            </button>
             <section className="weather-alert">
               <div className="weather-alert-icon"><AlertTriangle className="size-7" /></div>
               <div className="min-w-0">

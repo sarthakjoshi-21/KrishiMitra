@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Check, CircleHelp, Languages, Mic, Sprout, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Check, CircleHelp, Languages, Mic, Sprout, TriangleAlert } from 'lucide-react'
 import { FarmerSidebar } from './farmer-sidebar'
 import { useLanguage } from './language-context'
 import { t } from '@/lib/translations'
@@ -62,6 +62,14 @@ export default function CropHealthScreen({ onLogout, onNavigate }: Props) {
         <FarmerSidebar activeTab="Crop Health" onNavigate={onNavigate} onLogout={onLogout} />
 
         <main className="dashboard-main mx-auto flex max-w-4xl flex-col gap-5">
+          <button
+            type="button"
+            onClick={() => onNavigate('Overview')}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t('nav.backToDashboard', language)}
+          </button>
           <section className="rounded-3xl border border-primary/15 bg-card p-5 shadow-sm sm:p-7">
             <div className="flex items-center gap-4">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-secondary text-primary">
