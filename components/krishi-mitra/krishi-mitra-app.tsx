@@ -2,6 +2,8 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { Activity, ArrowRight, Bell, Camera, Check, ChevronDown, CloudSun, IndianRupee, Leaf, Loader2, MapPin, Menu, Mic, Package, Search, ShieldCheck, Sprout, Truck, Upload, Volume2, X } from 'lucide-react'
 import { createCropLot, getActiveCrops } from '@/lib/actions/crop-actions'
 import { getBidsForFarmer } from '@/lib/actions/bid-actions'
@@ -12,20 +14,35 @@ import type { AppNotification, CropLot } from '@/types/database'
 import LoginScreen from './login-screen'
 import { LanguageProvider, useLanguage } from './language-context'
 import { t } from '@/lib/translations'
-import LogisticsScreen from './logistics-screen'
-import SchemesScreen from './schemes-screen'
-import ResourcesScreen from './resources-screen'
-import CommunityScreen from './community-screen'
-import WeatherScreen from './weather-screen'
-import KisanSathiScreen from './kisan-sathi-screen'
-import IrrigationScreen from './irrigation-screen'
-import MarketBidsScreen from './market-bids-screen'
-import MyCropScreen from './my-crop-screen'
-import CropHealthScreen from './crop-health-screen'
-import BuyerDashboardScreen from './buyer-dashboard-screen'
-import BuyerProfileScreen from './buyer-profile-screen'
-import MyBidsScreen from './my-bids-screen'
 import { FarmerSidebar as SharedFarmerSidebar, farmerNavItems } from './farmer-sidebar'
+
+function ScreenSkeleton() {
+  return (
+    <div className="min-h-screen bg-background p-6 flex flex-col gap-6 animate-pulse">
+      <div className="h-14 w-full rounded-2xl bg-secondary/60" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="h-32 rounded-2xl bg-secondary/60" />
+        <div className="h-32 rounded-2xl bg-secondary/60" />
+        <div className="h-32 rounded-2xl bg-secondary/60" />
+      </div>
+      <div className="h-96 w-full rounded-2xl bg-secondary/60" />
+    </div>
+  )
+}
+
+const LogisticsScreen = dynamic(() => import('./logistics-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const SchemesScreen = dynamic(() => import('./schemes-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const ResourcesScreen = dynamic(() => import('./resources-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const CommunityScreen = dynamic(() => import('./community-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const WeatherScreen = dynamic(() => import('./weather-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const KisanSathiScreen = dynamic(() => import('./kisan-sathi-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const IrrigationScreen = dynamic(() => import('./irrigation-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const MarketBidsScreen = dynamic(() => import('./market-bids-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const MyCropScreen = dynamic(() => import('./my-crop-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const CropHealthScreen = dynamic(() => import('./crop-health-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const BuyerDashboardScreen = dynamic(() => import('./buyer-dashboard-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const BuyerProfileScreen = dynamic(() => import('./buyer-profile-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
+const MyBidsScreen = dynamic(() => import('./my-bids-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
 
 const FALLBACK_LOTS: CropLot[] = [
   { id: 'mock-1', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik, Maharashtra', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Ramesh Patil', created_at: '' } },
@@ -49,7 +66,13 @@ function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) =
   return (
     <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative h-36 overflow-hidden bg-secondary">
-        <img src={cropImage} alt={lot.crop_name} className="size-full object-cover" />
+        <Image
+          src={cropImage}
+          alt={lot.crop_name}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="size-full object-cover"
+        />
         <div className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-bold text-foreground">
           Grade {lot.grade}
         </div>
@@ -94,7 +117,7 @@ function Login({ onEnter }: { onEnter: (role: 'farmer' | 'buyer') => void }) {
 function FarmerProfileMenu({ profilePhoto, userName, onPhotoChange, onLogout }: { profilePhoto: string | null; userName: string; onPhotoChange: (photo: string) => void; onLogout: () => void }) {
   const { language } = useLanguage()
   const [open, setOpen] = useState(false)
-  return <div className="relative"><button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" className="farmer-profile-trigger"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><span className="hidden text-left sm:block"><strong>{userName}</strong><small>{t('common.farmer', language)}</small></span><ChevronDown className={`size-4 transition ${open ? 'rotate-180' : ''}`} /></button>{open && <div role="menu" className="farmer-profile-menu"><div className="farmer-profile-detail"><span className="farmer-avatar">{profilePhoto ? <img src={profilePhoto} alt={`${userName} profile`} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><div><p>{userName}</p><small>{t('common.farmer', language)}</small></div></div><label role="menuitem" className="farmer-profile-action"><Camera className="size-4" /> {t('common.addProfilePicture', language)}<input type="file" accept="image/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoChange(URL.createObjectURL(file)) }} /></label><button role="menuitem" onClick={onLogout} className="farmer-profile-action logout"><ArrowRight className="size-4 rotate-180" /> {t('nav.logout', language)}</button></div>}</div>
+  return <div className="relative"><button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" className="farmer-profile-trigger"><span className="farmer-avatar">{profilePhoto ? <Image src={profilePhoto} alt={`${userName} profile`} width={40} height={40} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><span className="hidden text-left sm:block"><strong>{userName}</strong><small>{t('common.farmer', language)}</small></span><ChevronDown className={`size-4 transition ${open ? 'rotate-180' : ''}`} /></button>{open && <div role="menu" className="farmer-profile-menu"><div className="farmer-profile-detail"><span className="farmer-avatar">{profilePhoto ? <Image src={profilePhoto} alt={`${userName} profile`} width={40} height={40} className="size-full rounded-full object-cover" /> : userName.charAt(0).toUpperCase()}</span><div><p>{userName}</p><small>{t('common.farmer', language)}</small></div></div><label role="menuitem" className="farmer-profile-action"><Camera className="size-4" /> {t('common.addProfilePicture', language)}<input type="file" accept="image/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoChange(URL.createObjectURL(file)) }} /></label><button role="menuitem" onClick={onLogout} className="farmer-profile-action logout"><ArrowRight className="size-4 rotate-180" /> {t('nav.logout', language)}</button></div>}</div>
 }
 
 function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: () => void }) {
@@ -442,7 +465,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                 </div>
                 {cropPhoto && (
                   <div className="mt-4 overflow-hidden rounded-xl border border-border">
-                    <img src={cropPhoto} alt="Crop preview" className="max-h-48 w-full object-cover" />
+                    <Image src={cropPhoto} alt="Crop preview" width={600} height={192} className="max-h-48 w-full object-cover" />
                   </div>
                 )}
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">

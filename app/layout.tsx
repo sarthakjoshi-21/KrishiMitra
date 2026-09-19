@@ -6,8 +6,8 @@ import 'leaflet/dist/leaflet.css'
 import { LanguageProvider } from '@/components/krishi-mitra/language-context'
 import { TranslationLayer } from '@/components/krishi-mitra/translation-layer'
 
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans' })
-const notoSerif = Noto_Serif_Devanagari({ subsets: ['devanagari'], variable: '--font-serif' })
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans', display: 'swap' })
+const notoSerif = Noto_Serif_Devanagari({ subsets: ['devanagari'], variable: '--font-serif', display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'Krishi Mitra — हर चरण, हर समस्या, एक समाधान',

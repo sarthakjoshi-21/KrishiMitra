@@ -68,13 +68,14 @@ function httpRequestJson<T = any>(
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Language = 'en' | 'hi' | 'mr'
-type TaskType = 'asr-translate' | 'translate-tts'
+type TaskType = 'asr-translate' | 'translate-tts' | 'translate'
 
 interface BhashiniRequestBody {
   task: TaskType
   language: Language
   audioBase64?: string   // required for asr-translate
-  text?: string          // required for translate-tts
+  text?: string          // required for translate-tts or translate
+  texts?: string[]       // optional batch for translate
   gender?: 'male' | 'female'
   sampleRate?: number    // default 16000 for ASR
 }
@@ -377,6 +378,86 @@ async function handleTranslateTts(
   }
 }
 
+// ─── Text-only Translation (translate) ──────────────────────────────────────────────────────────
+
+async function handleTranslate(
+  body: BhashiniRequestBody,
+  userId: string,
+  apiKey: string
+): Promise<NextResponse> {
+  const { language, text, texts } = body
+
+  // Accept either a single text or a batch of texts
+  const inputs: string[] = texts && texts.length > 0
+    ? texts
+    : text ? [text] : []
+
+  if (inputs.length === 0) {
+    return NextResponse.json({ error: 'text or texts is required for translate' }, { status: 400 })
+  }
+
+  const targetLang = BHASHINI_LANG[language]
+
+  if (language === 'en') {
+    // No-op: already English, return inputs as-is
+    return NextResponse.json({ translations: inputs })
+  }
+
+  const pipelineTasks: Array<{ taskType: string; config: Record<string, any> }> = [
+    {
+      taskType: 'translation',
+      config: {
+        language: { sourceLanguage: 'en', targetLanguage: targetLang },
+      },
+    },
+  ]
+
+  try {
+    const config = await fetchPipelineConfig(pipelineTasks as any, userId, apiKey)
+
+    if (!config.translation) {
+      return NextResponse.json({ error: 'Translation service not found in pipeline config' }, { status: 502 })
+    }
+
+    const computePayload = {
+      pipelineTasks: [
+        {
+          taskType: 'translation',
+          config: {
+            serviceId: config.translation.serviceId,
+            language: { sourceLanguage: 'en', targetLanguage: targetLang },
+          },
+        },
+      ],
+      inputData: {
+        input: inputs.map((src) => ({ source: src })),
+      },
+    }
+
+    const result = await callCompute(
+      config.translation.callbackUrl,
+      config.translation.inferenceApiKey,
+      computePayload
+    )
+
+    // Extract translated strings from pipelineResponse[0].output[]
+    const pipelineOutput: any[] = result?.pipelineResponse ?? []
+    let translations: string[] = inputs // default = untranslated (graceful fallback)
+    for (const step of pipelineOutput) {
+      if (step?.taskType === 'translation') {
+        const outputItems: any[] = step?.output ?? []
+        translations = outputItems.map((o: any, i: number) => o?.target ?? inputs[i] ?? '')
+      }
+    }
+
+    return NextResponse.json({ translations })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[Bhashini] translate error:', msg)
+    return NextResponse.json({ error: msg }, { status: 502 })
+  }
+}
+
 // ─── Main Route Handler ───────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -402,6 +483,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (task === 'asr-translate') return handleAsrTranslate(body, userId, apiKey)
   if (task === 'translate-tts') return handleTranslateTts(body, userId, apiKey)
+  if (task === 'translate') return handleTranslate(body, userId, apiKey)
 
   return NextResponse.json({ error: `Unknown task: ${task}` }, { status: 400 })
 }

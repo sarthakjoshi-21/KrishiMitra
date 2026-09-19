@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Languages, Loader2, Mail, ShieldCheck } from 'lucide-react'
 import { useLanguage, type Language } from '@/components/krishi-mitra/language-context'
 import { signInBuyer, signUpUser, getSession } from '@/lib/actions/auth-actions'
@@ -93,7 +94,7 @@ export default function BuyerLoginPage() {
       <section className="mx-auto my-auto w-full max-w-md py-8">
         <div className="flex flex-col items-center mb-6 text-center">
           <div className="size-16 overflow-hidden rounded-full bg-background/80 p-1 shadow-md ring-1 ring-primary/20 mb-3">
-            <img src={logoUrl} alt="Krishi Mitra Logo" className="size-full rounded-full object-contain" />
+            <Image src={logoUrl} alt="Krishi Mitra Logo" width={64} height={64} priority className="size-full rounded-full object-contain" />
           </div>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground">
             कृषि-मित्र <span className="text-primary font-sans text-sm block font-semibold tracking-wider uppercase">Krishi Mitra</span>

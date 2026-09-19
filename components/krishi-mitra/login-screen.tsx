@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Droplets, Languages, Leaf, Package, ShieldCheck, Sprout, TrendingUp, Truck } from 'lucide-react'
 import { useLanguage, type Language } from './language-context'
 import { t } from '@/lib/translations'
@@ -95,7 +96,7 @@ export default function LoginScreen({ onEnter }: Props) {
         <div className="w-full max-w-md justify-self-center text-left lg:max-w-lg lg:justify-self-end">
           <div className="flex flex-col items-center gap-2 py-0 text-center">
             <div className="aspect-square w-full max-w-[29rem] overflow-hidden rounded-full bg-background/70 p-2 shadow-[0_18px_28px_rgba(19,93,43,0.14)] ring-1 ring-primary/15">
-              <img src={logoUrl} alt="कृषि-मित्र logo" className="size-full rounded-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+              <Image src={logoUrl} alt="कृषि-मित्र logo" width={464} height={464} priority className="size-full rounded-full object-contain mix-blend-multiply dark:mix-blend-normal" />
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold text-primary">
               <ShieldCheck className="size-4" /> {t('login.detailsStay', language)}

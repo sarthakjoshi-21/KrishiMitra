@@ -2101,21 +2101,372 @@ export const translations: TranslationMap = {
     hi: 'शुद्ध प्राप्ति और लॉजिस्टिक्स',
     mr: 'निव्वळ नफा आणि वाहतूक',
   },
+
+  // ── Mandi Live Trends & Prices UI ──────────────────────────────────────────
+
+  'mandi.commodity': {
+    en: 'Commodity',
+    hi: 'फसल / जींस',
+    mr: 'पीक / शेतमाल',
+  },
+  'mandi.market': {
+    en: 'Market (Mandi)',
+    hi: 'मंडी / बाजार',
+    mr: 'बाजार समिती',
+  },
+  'mandi.minPrice': {
+    en: 'Min Price',
+    hi: 'न्यूनतम भाव',
+    mr: 'किमान भाव',
+  },
+  'mandi.maxPrice': {
+    en: 'Max Price',
+    hi: 'अधिकतम भाव',
+    mr: 'कमाल भाव',
+  },
+  'mandi.modalPrice': {
+    en: 'Modal Price',
+    hi: 'मॉडल भाव',
+    mr: 'सर्वसाधारण भाव',
+  },
+  'mandi.all': {
+    en: 'All Crops',
+    hi: 'सभी फसलें',
+    mr: 'सर्व पिके',
+  },
+  'mandi.filterByCrop': {
+    en: 'Filter by Commodity:',
+    hi: 'फसल के अनुसार छाँटें:',
+    mr: 'पिकानुसार निवडा:',
+  },
+  'mandi.liveArrivals': {
+    en: 'Live Agmarknet Mandi Prices',
+    hi: 'लाइव एगमार्कनेट मंडी भाव',
+    mr: 'थेट अ‍ॅगमार्कनेट बाजार भाव',
+  },
+  'mandi.showingDistrict': {
+    en: 'District Mandis:',
+    hi: 'जिले की मंडियां:',
+    mr: 'जिल्हा बाजार समित्या:',
+  },
+  'mandi.perQuintal': {
+    en: '₹/Quintal',
+    hi: '₹/क्विंटल',
+    mr: '₹/क्विंटल',
+  },
+  'mandi.noData': {
+    en: 'No Mandi records found for the selected commodity.',
+    hi: 'चयनित फसल के लिए कोई मंडी रिकॉर्ड नहीं मिला।',
+    mr: 'निवडलेल्या पिकासाठी कोणताही बाजार भाव आढळला नाही.',
+  },
+
+  // ── Commodities Dictionary Namespace ───────────────────────────────────────
+
+  'commodities.onion': {
+    en: 'Onion',
+    hi: 'प्याज',
+    mr: 'कांदा',
+  },
+  'commodities.wheat': {
+    en: 'Wheat',
+    hi: 'गेहूँ',
+    mr: 'गहू',
+  },
+  'commodities.basmatiRice': {
+    en: 'Basmati Rice',
+    hi: 'बासमती चावल',
+    mr: 'बासमती तांदूळ',
+  },
+  'commodities.rice': {
+    en: 'Rice',
+    hi: 'चावल',
+    mr: 'तांदूळ',
+  },
+  'commodities.paddy': {
+    en: 'Paddy',
+    hi: 'धान',
+    mr: 'भात',
+  },
+  'commodities.tomato': {
+    en: 'Tomato',
+    hi: 'टमाटर',
+    mr: 'टोमॅटो',
+  },
+  'commodities.potato': {
+    en: 'Potato',
+    hi: 'आलू',
+    mr: 'बटाटा',
+  },
+  'commodities.soyabean': {
+    en: 'Soybean',
+    hi: 'सोयाबीन',
+    mr: 'सोयाबीन',
+  },
+  'commodities.soybean': {
+    en: 'Soybean',
+    hi: 'सोयाबीन',
+    mr: 'सोयाबीन',
+  },
+  'commodities.cotton': {
+    en: 'Cotton',
+    hi: 'कपास',
+    mr: 'कापूस',
+  },
+  'commodities.turDal': {
+    en: 'Tur Dal',
+    hi: 'तूर दाल',
+    mr: 'तूर डाळ',
+  },
+  'commodities.arhar': {
+    en: 'Arhar',
+    hi: 'अरहर',
+    mr: 'तूर',
+  },
+  'commodities.redGram': {
+    en: 'Red Gram',
+    hi: 'अरहर',
+    mr: 'तूर',
+  },
+  'commodities.gram': {
+    en: 'Gram (Chana)',
+    hi: 'चना',
+    mr: 'हरभरा',
+  },
+  'commodities.chana': {
+    en: 'Gram (Chana)',
+    hi: 'चना',
+    mr: 'हरभरा',
+  },
+  'commodities.bengalGram': {
+    en: 'Bengal Gram',
+    hi: 'चना',
+    mr: 'हरभरा',
+  },
+  'commodities.moong': {
+    en: 'Green Gram (Moong)',
+    hi: 'मूंग',
+    mr: 'मूग',
+  },
+  'commodities.greenGram': {
+    en: 'Green Gram (Moong)',
+    hi: 'मूंग',
+    mr: 'मूग',
+  },
+  'commodities.greenGramMoong': {
+    en: 'Green Gram (Moong)',
+    hi: 'मूंग',
+    mr: 'मूग',
+  },
+  'commodities.urad': {
+    en: 'Black Gram (Urad)',
+    hi: 'उड़द',
+    mr: 'उडीद',
+  },
+  'commodities.blackGram': {
+    en: 'Black Gram (Urad)',
+    hi: 'उड़द',
+    mr: 'उडीद',
+  },
+  'commodities.garlic': {
+    en: 'Garlic',
+    hi: 'लहसुन',
+    mr: 'लसूण',
+  },
+  'commodities.ginger': {
+    en: 'Ginger',
+    hi: 'अदरक',
+    mr: 'आले',
+  },
+  'commodities.grapes': {
+    en: 'Grapes',
+    hi: 'अंगूर',
+    mr: 'द्राक्षे',
+  },
+  'commodities.pomegranate': {
+    en: 'Pomegranate',
+    hi: 'अनार',
+    mr: 'डाळिंब',
+  },
+  'commodities.maize': {
+    en: 'Maize',
+    hi: 'मक्का',
+    mr: 'मका',
+  },
+  'commodities.corn': {
+    en: 'Corn',
+    hi: 'मक्का',
+    mr: 'मका',
+  },
+  'commodities.bajra': {
+    en: 'Pearl Millet (Bajra)',
+    hi: 'बाजरा',
+    mr: 'बाजरी',
+  },
+  'commodities.jowar': {
+    en: 'Sorghum (Jowar)',
+    hi: 'ज्वार',
+    mr: 'ज्वारी',
+  },
+  'commodities.banana': {
+    en: 'Banana',
+    hi: 'केला',
+    mr: 'केळी',
+  },
+  'commodities.mango': {
+    en: 'Mango',
+    hi: 'आम',
+    mr: 'आंबा',
+  },
+  'commodities.sugarcane': {
+    en: 'Sugarcane',
+    hi: 'गन्ना',
+    mr: 'ऊस',
+  },
+  'commodities.mustard': {
+    en: 'Mustard',
+    hi: 'सरसों',
+    mr: 'मोहरी',
+  },
+  'commodities.groundnut': {
+    en: 'Groundnut',
+    hi: 'मूंगफली',
+    mr: 'भुईमूग',
+  },
+  'commodities.peanut': {
+    en: 'Peanut',
+    hi: 'मूंगफली',
+    mr: 'शेंगदाणे',
+  },
+  'commodities.chilli': {
+    en: 'Green Chilli',
+    hi: 'हरी मिर्च',
+    mr: 'हिरवी मिरची',
+  },
+  'commodities.greenChilli': {
+    en: 'Green Chilli',
+    hi: 'हरी मिर्च',
+    mr: 'हिरवी मिरची',
+  },
+  'commodities.redChilli': {
+    en: 'Red Chilli',
+    hi: 'लाल मिर्च',
+    mr: 'लाल मिरची',
+  },
+  'commodities.cauliflower': {
+    en: 'Cauliflower',
+    hi: 'फूलगोभी',
+    mr: 'फ्लॉवर',
+  },
+  'commodities.cabbage': {
+    en: 'Cabbage',
+    hi: 'पत्तागोभी',
+    mr: 'कोबी',
+  },
+  'commodities.brinjal': {
+    en: 'Brinjal',
+    hi: 'बैंगन',
+    mr: 'वांगी',
+  },
+  'commodities.eggplant': {
+    en: 'Eggplant',
+    hi: 'बैंगन',
+    mr: 'वांगी',
+  },
+  'commodities.coriander': {
+    en: 'Coriander',
+    hi: 'धनिया',
+    mr: 'कोथिंबीर',
+  },
+  'commodities.fenugreek': {
+    en: 'Fenugreek',
+    hi: 'मेथी',
+    mr: 'मेथी',
+  },
+  'commodities.cucumber': {
+    en: 'Cucumber',
+    hi: 'खीरा',
+    mr: 'काकडी',
+  },
+  'commodities.apple': {
+    en: 'Apple',
+    hi: 'सेब',
+    mr: 'सफरचंद',
+  },
+  'commodities.orange': {
+    en: 'Orange',
+    hi: 'संतरा',
+    mr: 'संत्री',
+  },
+  'commodities.lemon': {
+    en: 'Lemon',
+    hi: 'नींबू',
+    mr: 'लिंबू',
+  },
+  'commodities.turmeric': {
+    en: 'Turmeric',
+    hi: 'हल्दी',
+    mr: 'हळद',
+  },
+  'commodities.cumin': {
+    en: 'Cumin',
+    hi: 'जीरा',
+    mr: 'जिरे',
+  },
+  'commodities.sesamum': {
+    en: 'Sesamum (Til)',
+    hi: 'तिल',
+    mr: 'तीळ',
+  },
+  'commodities.peas': {
+    en: 'Green Peas',
+    hi: 'मटर',
+    mr: 'मटार',
+  },
+  'commodities.greenPeas': {
+    en: 'Green Peas',
+    hi: 'हरी मटर',
+    mr: 'ओला मटार',
+  },
+  'mandi.fallbackWarning': {
+    en: 'Live government API is currently unreachable. Displaying cached demo records for Nashik.',
+    hi: 'सरकारी लाइव एपीआई वर्तमान में अनुपलब्ध है। नासिक के लिए कैश्ड डेमो रिकॉर्ड दिखाए जा रहे हैं।',
+    mr: 'थेट शासकीय एपीआय सध्या अनुपलब्ध आहे. नाशिकसाठी कॅश केलेले डेमो रेकॉर्ड दर्शवित आहे.',
+  },
+  'mandi.fallbackBadge': {
+    en: 'Cached Demo Data',
+    hi: 'कैश्ड डेमो डेटा',
+    mr: 'कॅश केलेला डेमो डेटा',
+  },
 }
 
 
-// ─── Helper function ──────────────────────────────────────────────────────────
+// ─── Helper functions ─────────────────────────────────────────────────────────
+
+/**
+ * Normalizes an incoming commodity string from the API (lowercase, replace spaces with camelCase).
+ * Examples:
+ *   "Onion" -> "onion"
+ *   "Wheat" -> "wheat"
+ *   "Basmati Rice" -> "basmatiRice"
+ *   "Green Gram (Moong)" -> "greenGramMoong"
+ */
+export function normalizeCommodityKey(name: string): string {
+  if (!name) return ''
+  const cleaned = name.trim().replace(/[^a-zA-Z0-9\s]/g, ' ')
+  const words = cleaned.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return name.toLowerCase()
+  return words[0].toLowerCase() + words.slice(1).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('')
+}
 
 /**
  * Retrieve a translated string.
  * Falls back to English if the key is missing for the given language.
- * Falls back to the raw key string if the key doesn't exist at all.
+ * Falls back to the provided fallback string (or the raw key string) if the key doesn't exist at all.
  */
-export function t(key: string, language: Language): string {
+export function t(key: string, language: Language, fallback?: string): string {
   const entry = translations[key]
   if (!entry) {
-    console.warn(`[translations] Missing key: "${key}"`)
-    return key
+    return fallback ?? key
   }
-  return entry[language] ?? entry['en'] ?? key
+  return entry[language] ?? entry['en'] ?? fallback ?? key
 }
