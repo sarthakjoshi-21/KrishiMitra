@@ -1469,6 +1469,147 @@ export const translations: TranslationMap = {
     hi: 'आपकी खोज से मेल खाने वाला कोई प्रदाता नहीं मिला।',
     mr: 'तुमच्या शोधाशी जुळणारा कोणताही प्रदाता आढळला नाही.',
   },
+  'resources.verifiedBadge': {
+    en: 'Krishi Mitra Verified',
+    hi: 'कृषि मित्र सत्यापित',
+    mr: 'कृषी मित्र सत्यापित',
+  },
+  'resources.call': {
+    en: 'Call',
+    hi: 'कॉल करें',
+    mr: 'कॉल करा',
+  },
+  'resources.directions': {
+    en: 'Directions',
+    hi: 'दिशा-निर्देश',
+    mr: 'दिशा',
+  },
+  'resources.useMyLocation': {
+    en: 'Use My Location',
+    hi: 'मेरा स्थान उपयोग करें',
+    mr: 'माझे स्थान वापरा',
+  },
+  'resources.locating': {
+    en: 'Detecting Location...',
+    hi: 'स्थान खोजा जा रहा है...',
+    mr: 'स्थान शोधत आहे...',
+  },
+  'resources.manualLocation': {
+    en: 'Set Location',
+    hi: 'स्थान सेट करें',
+    mr: 'स्थान सेट करा',
+  },
+  'resources.villageOrPincode': {
+    en: 'Enter Village or 6-digit Pincode (e.g. Chandwad or 422001)',
+    hi: 'गांव या 6 अंकों का पिनकोड दर्ज करें (उदा. चांदवड या 422001)',
+    mr: 'गाव किंवा 6 अंकी पिनकोड प्रविष्ट करा (उदा. चांदवड किंवा 422001)',
+  },
+  'resources.locationDenied': {
+    en: 'Location access disabled or timed out. Enter your village or pincode below.',
+    hi: 'स्थान अनुमति नहीं मिली या समय समाप्त। नीचे अपना गांव या पिनकोड दर्ज करें।',
+    mr: 'स्थान परवानगी मिळाली नाही किंवा वेळ संपला. खाली आपले गाव किंवा पिनकोड प्रविष्ट करा.',
+  },
+  'resources.registerProvider': {
+    en: 'Register Center',
+    hi: 'केंद्र पंजीकृत करें',
+    mr: 'केंद्र नोंदणी करा',
+  },
+  'resources.requestModalTitle': {
+    en: 'Request Service',
+    hi: 'सेवा अनुरोध',
+    mr: 'सेवा विनंती',
+  },
+  'resources.farmerName': {
+    en: 'Your Full Name',
+    hi: 'आपका पूरा नाम',
+    mr: 'तुमचे पूर्ण नाव',
+  },
+  'resources.farmerPhone': {
+    en: 'Your Phone Number',
+    hi: 'आपका फोन नंबर',
+    mr: 'तुमचा फोन नंबर',
+  },
+  'resources.notes': {
+    en: 'Requirement / Timeline Notes',
+    hi: 'आवश्यकता / समय विवरण',
+    mr: 'आवश्यकता / वेळ तपशील',
+  },
+  'resources.notesPlaceholder': {
+    en: 'E.g., Need tractor tomorrow morning for 4 hours, or 10 bags of urea...',
+    hi: 'उदा., कल सुबह 4 घंटे के लिए ट्रैक्टर चाहिए, या 10 बोरी यूरिया...',
+    mr: 'उदा., उद्या सकाळी 4 तासांसाठी ट्रॅक्टर हवा, किंवा 10 पोती युरिया...',
+  },
+  'resources.submitRequest': {
+    en: 'Send Request',
+    hi: 'अनुरोध भेजें',
+    mr: 'विनंती पाठवा',
+  },
+  'resources.submitting': {
+    en: 'Submitting...',
+    hi: 'भेजा जा रहा है...',
+    mr: 'पाठवत आहे...',
+  },
+  'resources.cancel': {
+    en: 'Cancel',
+    hi: 'रद्द करें',
+    mr: 'रद्द करा',
+  },
+  'resources.providerFormTitle': {
+    en: 'Provider Onboarding (Fixed Business Location)',
+    hi: 'स्थिर सेवा केंद्र पंजीकरण',
+    mr: 'स्थिर सेवा केंद्र नोंदणी',
+  },
+  'resources.providerFormSubtitle': {
+    en: 'Register your fixed agro-store, workshop, or center. Fixed locations only (no continuous GPS tracking).',
+    hi: 'अपना निश्चित कृषि-स्टोर, कार्यशाला या केंद्र पंजीकृत करें। केवल स्थिर स्थान (कोई निरंतर जीपीएस ट्रैकिंग नहीं)।',
+    mr: 'तुमचे निश्चित कृषी-स्टोअर, वर्कशॉप किंवा केंद्र नोंदवा. फक्त स्थिर ठिकाण (कोणतीही सतत जीपीएस ट्रॅकिंग नाही).',
+  },
+  'resources.businessName': {
+    en: 'Business / Service Name',
+    hi: 'व्यवसाय / सेवा केंद्र का नाम',
+    mr: 'व्यवसाय / सेवा केंद्राचे नाव',
+  },
+  'resources.ownerName': {
+    en: 'Owner / Contact Name',
+    hi: 'मालिक / संपर्क व्यक्ति का नाम',
+    mr: 'मालक / संपर्क व्यक्तीचे नाव',
+  },
+  'resources.address': {
+    en: 'Full Address',
+    hi: 'पूरा पता',
+    mr: 'पूर्ण पत्ता',
+  },
+  'resources.pincode': {
+    en: 'Pincode (6 digits)',
+    hi: 'पिनकोड (6 अंक)',
+    mr: 'पिनकोड (6 अंक)',
+  },
+  'resources.gpsCoords': {
+    en: 'Fixed Business Coordinates (Lat, Lon)',
+    hi: 'स्थिर व्यावसायिक निर्देशांक (अक्षांश, देशांतर)',
+    mr: 'स्थिर व्यावसायिक निर्देशांक (अक्षांश, रेखांश)',
+  },
+  'resources.pendingVerificationNotice': {
+    en: 'Registered with is_available: true and is_verified: false (pending Krishi Mitra verification).',
+    hi: 'सफलतापूर्वक पंजीकृत! कृषि मित्र सत्यापन की प्रतीक्षा में।',
+    mr: 'यशस्वीरीत्या नोंदणीकृत! कृषी मित्र पडताळणी प्रलंबित.',
+  },
+  'resources.emptyTitle': {
+    en: 'No Providers Available Within Range',
+    hi: 'दायरे में कोई प्रदाता उपलब्ध नहीं है',
+    mr: 'कक्षेत कोणताही प्रदाता उपलब्ध नाही',
+  },
+  'resources.emptySubtitle': {
+    en: 'No verified service providers found in this category near your location. Try another category or enter another village.',
+    hi: 'आपके स्थान के निकट इस श्रेणी में कोई सत्यापित प्रदाता नहीं मिला। कोई अन्य श्रेणी आज़माएं या अन्य गांव दर्ज करें।',
+    mr: 'तुमच्या स्थानाजवळ या श्रेणीमध्ये कोणताही सत्यापित प्रदाता आढळला नाही. दुसरी श्रेणी निवडून पहा किंवा दुसरे गाव टाका.',
+  },
+  'resources.resetFilters': {
+    en: 'Reset Filters',
+    hi: 'फ़िल्टर रीसेट करें',
+    mr: 'फिल्टर रीसेट करा',
+  },
+
 
   // ── Community Screen ──────────────────────────────────────────────────────
 

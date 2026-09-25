@@ -85,6 +85,49 @@ export interface AppNotification {
   created_at: string
 }
 
+export type ServiceCategory = 'Seeds' | 'Fertilizer' | 'Machinery' | 'Labour' | 'Logistics' | 'Storage'
+
+export interface ServiceItemTuple {
+  name: string
+  price: string
+  detail?: string
+  stock?: 'In stock' | 'Out' | string
+}
+
+export interface ServiceProvider {
+  id: string
+  user_id?: string | null
+  provider_name: string
+  category: ServiceCategory | string
+  services: any // Array of [name, price, detail, stock] or ServiceItemTuple[] or JSON
+  phone: string
+  address: string
+  pincode?: string | null
+  latitude: number
+  longitude: number
+  rating: number
+  is_available: boolean
+  is_verified: boolean
+  price_info?: string | null
+  created_at: string
+  distance_km?: number
+  owner_name?: string
+  response_time?: string
+}
+
+export interface ServiceRequest {
+  id: string
+  provider_id: string
+  farmer_id?: string | null
+  farmer_name: string
+  farmer_phone: string
+  service_category: string
+  notes?: string | null
+  status: 'pending' | 'accepted' | 'completed' | 'cancelled' | string
+  created_at: string
+  provider?: ServiceProvider
+}
+
 // -------------------------------------------------------
 // Supabase generated Database type (subset)
 // -------------------------------------------------------
@@ -115,9 +158,31 @@ export type Database = {
         Update: Partial<Omit<AppNotification, 'id' | 'created_at'>>
         Relationships: any[]
       }
+      service_providers: {
+        Row: ServiceProvider
+        Insert: Omit<ServiceProvider, 'id' | 'created_at' | 'distance_km'>
+        Update: Partial<Omit<ServiceProvider, 'id' | 'created_at'>>
+        Relationships: any[]
+      }
+      service_requests: {
+        Row: ServiceRequest
+        Insert: Omit<ServiceRequest, 'id' | 'created_at' | 'provider'>
+        Update: Partial<Omit<ServiceRequest, 'id' | 'created_at'>>
+        Relationships: any[]
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      get_nearby_providers: {
+        Args: {
+          farmer_lat: number
+          farmer_lon: number
+          filter_category?: string | null
+          max_distance_km?: number | null
+        }
+        Returns: ServiceProvider[]
+      }
+    }
     Enums: {
       user_role: UserRole
       bid_status: BidStatus
@@ -125,3 +190,4 @@ export type Database = {
     }
   }
 }
+
