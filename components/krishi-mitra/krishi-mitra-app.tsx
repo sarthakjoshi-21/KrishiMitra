@@ -141,7 +141,11 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
   const [liveDate, setLiveDate] = useState('')
   const [liveLots, setLiveLots] = useState<CropLot[]>(FALLBACK_LOTS)
   const [loadingLots, setLoadingLots] = useState(true)
-  const [recentBids, setRecentBids] = useState([{name:'GreenField Foods', place:'Mumbai · 48 min ago', bid:'₹35.60/kg', delta:'+4.1%'},{name:'Harvest Hub', place:'Pune · 2 hrs ago', bid:'₹35.10/kg', delta:'+2.6%'},{name:'Bharat Grains Co.', place:'Nashik · 4 hrs ago', bid:'₹34.80/kg', delta:'+1.8%'}])
+  const [recentBids, setRecentBids] = useState<{ id?: string; name: string; place: string; bid: string; delta: string }[]>([
+    { id: 'sample-1', name: 'GreenField Foods', place: 'Mumbai · 48 min ago', bid: '₹35.60/kg', delta: '+4.1%' },
+    { id: 'sample-2', name: 'Harvest Hub', place: 'Pune · 2 hrs ago', bid: '₹35.10/kg', delta: '+2.6%' },
+    { id: 'sample-3', name: 'Bharat Grains Co.', place: 'Nashik · 4 hrs ago', bid: '₹34.80/kg', delta: '+1.8%' },
+  ])
 
   useEffect(() => {
     const hour = new Date().getHours()
@@ -211,6 +215,7 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
         const mapped = result.data.slice(0, 3).map((b: any) => {
           const price = Number(b.bid_price_per_kg) || (Number(b.bid_price_per_quintal) || 0) / 100 || 0
           return {
+            id: b.id,
             name: b.buyer?.full_name || 'Verified Buyer',
             place: b.buyer?.location ? `${b.buyer.location} · recent` : 'recent',
             bid: `₹${(Number(price) || 0).toFixed(2)}/kg`,
@@ -536,8 +541,8 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
                 <button onClick={() => setTab('Market & Bids')} className="text-xs font-bold text-primary">{t('dashboard.bids.viewAll', language)}</button>
               </div>
               <div className="flex flex-col gap-1 p-3">
-                {recentBids.map((bid) => (
-                  <div key={bid.name} className="bid-row">
+                {recentBids.map((bid, index) => (
+                  <div key={bid.id ?? `${bid.name || 'bid'}-${index}`} className="bid-row">
                     <div className="flex size-9 items-center justify-center rounded-xl bg-secondary text-primary">
                       <IndianRupee className="size-4" />
                     </div>

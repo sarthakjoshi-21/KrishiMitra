@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Calendar, Check, Clock, Globe, IndianRupee, Languages, Loader2, MapPin, Minus, PlusCircle, RotateCw, ShieldCheck } from 'lucide-react'
-import { getBidsForFarmer, updateBidStatus } from '@/lib/actions/bid-actions'
+import { counterBid, getBidsForFarmer, updateBidStatus } from '@/lib/actions/bid-actions'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { getFarmerListings } from '@/lib/actions/crop-actions'
 import type { Bid } from '@/types/database'
 import InteractiveMap from '@/components/InteractiveMap'
@@ -236,6 +237,7 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [counterModal, setCounterModal] = useState<Bid | null>(null)
   const [counterPrice, setCounterPrice] = useState('')
+  const [counterNotes, setCounterNotes] = useState('')
   const [paymentModal, setPaymentModal] = useState<Bid | null>(null)
   const [toast, setToast] = useState('')
   const [farmerCoords, setFarmerCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -610,7 +612,25 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     loadData()
     // Real-time polling every 3 seconds for live presentation
     const interval = setInterval(loadData, 3000)
-    return () => clearInterval(interval)
+
+    // Supabase realtime channel for instant push updates
+    const supabase = getSupabaseBrowserClient()
+    const channel = supabase
+      .channel('farmer-market-bids-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bids' },
+        (payload) => {
+          console.log('[MarketBidsScreen] Realtime bids update:', payload)
+          loadData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   async function accept(bid: Bid) {
@@ -652,8 +672,9 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
   }
 
   function openCounter(bid: Bid) {
-    const pricePerKg = bid.bid_price_per_kg ? Number(bid.bid_price_per_kg) : ((bid.bid_price_per_quintal || 0) / 100)
-    setCounterPrice(String(pricePerKg))
+    const pricePerKg = bid.counter_price_per_kg || (bid.bid_price_per_kg ? Number(bid.bid_price_per_kg) : ((bid.bid_price_per_quintal || 0) / 100))
+    setCounterPrice(String(pricePerKg || ''))
+    setCounterNotes(bid.counter_notes || '')
     setCounterModal(bid)
   }
 
@@ -663,15 +684,63 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     if (isNaN(price) || price <= 0) return
 
     setIsSubmitting(true)
+    const notes = counterNotes.trim()
     try {
-      await updateBidStatus(counterModal.id, 'counter', price)
-      setBids((curr) => curr.map((b) => b.id === counterModal.id ? { ...b, status: 'counter', counter_price: price } : b))
+      // 1. Direct Supabase update as specified in directive:
+      const supabase = getSupabaseBrowserClient()
+      await (supabase
+        .from('bids') as any)
+        .update({
+          status: 'countered',
+          counter_price_per_kg: price,
+          counter_price: price,
+          counter_by: 'farmer',
+          counter_notes: notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', counterModal.id)
+
+      // Also call server action for server-side revalidation & buyer notification
+      await counterBid(counterModal.id, price, 'farmer', notes)
+
+      // 2. Refresh local farmer view immediately to reflect dispatched counter
+      setBids((curr) =>
+        curr.map((b) =>
+          b.id === counterModal.id
+            ? {
+                ...b,
+                status: 'countered',
+                counter_price_per_kg: price,
+                counter_price: price,
+                counter_by: 'farmer',
+                counter_notes: notes || null,
+              }
+            : b
+        )
+      )
       setCounterModal(null)
-      setToast('Counter-bid sent successfully!')
-    } catch {
-      setBids((curr) => curr.map((b) => b.id === counterModal.id ? { ...b, status: 'counter', counter_price: price } : b))
+      setCounterNotes('')
+      setToast('Counter-offer sent to buyer successfully!')
+      await loadData()
+    } catch (err) {
+      console.warn('[submitCounter] error:', err)
+      setBids((curr) =>
+        curr.map((b) =>
+          b.id === counterModal.id
+            ? {
+                ...b,
+                status: 'countered',
+                counter_price_per_kg: price,
+                counter_price: price,
+                counter_by: 'farmer',
+                counter_notes: notes || null,
+              }
+            : b
+        )
+      )
       setCounterModal(null)
-      setToast('Counter-bid sent successfully!')
+      setCounterNotes('')
+      setToast('Counter-offer dispatched!')
     } finally {
       setIsSubmitting(false)
     }
@@ -1300,8 +1369,20 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <p className="eyebrow">{t('marketBids.directNegotiation', language)}</p>
             <h2 className="mt-2 font-serif text-2xl font-bold">{t('marketBids.counterBid', language)}</h2>
-            <p className="text-xs text-muted-foreground mt-1">{t('marketBids.buyer', language)}: {counterModal.buyer?.full_name || 'Buyer'} · {t('marketBids.currentBid', language)}: ₹{Number(counterModal.bid_price_per_kg || 0).toFixed(2)}/kg</p>
-            <div className="mt-4">
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('marketBids.buyer', language)}: <strong>{counterModal.buyer?.full_name || 'Buyer'}</strong> · {t('marketBids.currentBid', language)}: ₹{Number(counterModal.bid_price_per_kg || 0).toFixed(2)}/kg
+            </p>
+
+            {counterModal.counter_by === 'buyer' && counterModal.counter_price_per_kg && (
+              <div className="mt-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 p-3 text-xs text-purple-900 dark:text-purple-200">
+                <p className="font-bold">⚡ Buyer Proposed Counter-Offer: ₹{Number(counterModal.counter_price_per_kg).toFixed(2)} / kg</p>
+                {counterModal.counter_notes && (
+                  <p className="italic mt-1 text-[11px] opacity-90">&ldquo;{counterModal.counter_notes}&rdquo;</p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
               <label className="field">
                 <span>{t('marketBids.yourCounterOffer', language)}</span>
                 <input
@@ -1311,12 +1392,30 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
                   value={counterPrice}
                   onChange={(e) => setCounterPrice(e.target.value)}
                   placeholder="e.g. 36.00"
+                  className="w-full text-base font-bold"
+                />
+              </label>
+
+              {Number(counterPrice) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  ≈ ₹{(Number(counterPrice) * 100).toLocaleString('en-IN')} / Quintal
+                </p>
+              )}
+
+              <label className="field">
+                <span>{language === 'hi' ? 'खरीदार के लिए टिप्पणी (वैकल्पिक)' : language === 'mr' ? 'खरेदीदारासाठी टीप (पर्यायी)' : 'Note for Buyer (Optional)'}</span>
+                <textarea
+                  rows={2}
+                  value={counterNotes}
+                  onChange={(e) => setCounterNotes(e.target.value)}
+                  placeholder={language === 'hi' ? 'उदा. कल सुबह तक उठा लें, तो यह दाम पक्का...' : language === 'mr' ? 'उदा. उद्या सकाळपर्यंत माल उचलल्यास हा दर मान्य...' : 'e.g. Can dispatch immediately at this price...'}
+                  className="w-full text-xs rounded-xl border border-border p-2.5 bg-background"
                 />
               </label>
             </div>
             <div className="mt-6 flex gap-3">
               <button onClick={() => setCounterModal(null)} className="secondary-button flex-1">{t('common.cancel', language)}</button>
-              <button onClick={submitCounter} disabled={isSubmitting} className="primary-button flex-1">
+              <button onClick={submitCounter} disabled={isSubmitting || !counterPrice || Number(counterPrice) <= 0} className="primary-button flex-1">
                 {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> {t('marketBids.sending', language)}</> : t('marketBids.sendCounter', language)}
               </button>
             </div>

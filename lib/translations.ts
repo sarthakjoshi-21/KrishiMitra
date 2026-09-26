@@ -1610,6 +1610,92 @@ export const translations: TranslationMap = {
     mr: 'फिल्टर रीसेट करा',
   },
 
+  // ── Bid Negotiation & Counter-Offers ──────────────────────────────────────
+  'bidRow.quantity': {
+    en: 'Quantity',
+    hi: 'मात्रा',
+    mr: 'प्रमाण',
+  },
+  'bidRow.location': {
+    en: 'Location',
+    hi: 'स्थान',
+    mr: 'ठिकाण',
+  },
+  'bidRow.total': {
+    en: 'Total',
+    hi: 'कुल राशि',
+    mr: 'एकूण रक्कम',
+  },
+  'bidRow.statusAccepted': {
+    en: 'Accepted',
+    hi: 'स्वीकृत',
+    mr: 'स्वीकारले',
+  },
+  'bidRow.statusRejected': {
+    en: 'Rejected',
+    hi: 'अस्वीकृत',
+    mr: 'नाकारले',
+  },
+  'bidRow.statusCounter': {
+    en: 'Counter Offer',
+    hi: 'काउंटर प्रस्ताव',
+    mr: 'काउंटर ऑफर',
+  },
+  'bidRow.statusPending': {
+    en: 'Pending Review',
+    hi: 'समीक्षाधीन',
+    mr: 'पडताळणी प्रलंबित',
+  },
+  'bidRow.accept': {
+    en: 'Accept',
+    hi: 'स्वीकार करें',
+    mr: 'स्वीकारा',
+  },
+  'bidRow.counter': {
+    en: 'Counter',
+    hi: 'काउंटर करें',
+    mr: 'काउंटर करा',
+  },
+  'bidRow.reject': {
+    en: 'Reject',
+    hi: 'अस्वीकार',
+    mr: 'नाकारा',
+  },
+  'marketBids.directNegotiation': {
+    en: 'Direct Negotiation',
+    hi: 'सीधी बातचीत',
+    mr: 'थेट वाटाघाटी',
+  },
+  'marketBids.counterBid': {
+    en: 'Counter Offer',
+    hi: 'काउंटर प्रस्ताव',
+    mr: 'प्रति-प्रस्ताव / काउंटर ऑफर',
+  },
+  'marketBids.buyer': {
+    en: 'Buyer',
+    hi: 'खरीदार',
+    mr: 'खरेदीदार',
+  },
+  'marketBids.currentBid': {
+    en: 'Current Bid',
+    hi: 'वर्तमान बोली',
+    mr: 'सध्याची बोली',
+  },
+  'marketBids.yourCounterOffer': {
+    en: 'Your Counter Price (₹ / kg)',
+    hi: 'आपका काउंटर मूल्य (₹ / किग्रा)',
+    mr: 'तुमचा काउंटर दर (₹ / किलो)',
+  },
+  'marketBids.sending': {
+    en: 'Sending...',
+    hi: 'भेजा जा रहा है...',
+    mr: 'पाठवत आहे...',
+  },
+  'marketBids.sendCounter': {
+    en: 'Send Counter Offer',
+    hi: 'काउंटर प्रस्ताव भेजें',
+    mr: 'काउंटर ऑफर पाठवा',
+  },
 
   // ── Community Screen ──────────────────────────────────────────────────────
 
@@ -1790,88 +1876,6 @@ export const translations: TranslationMap = {
     en: 'Live',
     hi: 'लाइव',
     mr: 'थेट',
-  },
-  'marketBids.directNegotiation': {
-    en: 'Direct Negotiation',
-    hi: 'सीधी बातचीत',
-    mr: 'थेट वाटाघाटी',
-  },
-  'marketBids.counterBid': {
-    en: 'Counter-Bid',
-    hi: 'प्रति-प्रस्ताव',
-    mr: 'प्रति-बोली',
-  },
-  'marketBids.currentBid': {
-    en: 'Current Bid',
-    hi: 'वर्तमान बोली',
-    mr: 'सध्याची बोली',
-  },
-  'marketBids.yourCounterOffer': {
-    en: 'Your Counter-Offer (₹ per kg)',
-    hi: 'आपका प्रति-प्रस्ताव (₹ प्रति किग्रा)',
-    mr: 'तुमची प्रति-बोली (₹ प्रति किलो)',
-  },
-  'marketBids.sendCounter': {
-    en: 'Send Counter-Offer',
-    hi: 'प्रति-प्रस्ताव भेजें',
-    mr: 'प्रति-बोली पाठवा',
-  },
-  'marketBids.sending': {
-    en: 'Sending…',
-    hi: 'भेजा जा रहा है…',
-    mr: 'पाठवत आहे…',
-  },
-
-  // BidRow
-  'bidRow.quantity': {
-    en: 'Quantity',
-    hi: 'मात्रा',
-    mr: 'प्रमाण',
-  },
-  'bidRow.location': {
-    en: 'Location',
-    hi: 'स्थान',
-    mr: 'ठिकाण',
-  },
-  'bidRow.total': {
-    en: 'Total',
-    hi: 'कुल',
-    mr: 'एकूण',
-  },
-  'bidRow.accept': {
-    en: 'Accept',
-    hi: 'स्वीकारें',
-    mr: 'स्वीकारा',
-  },
-  'bidRow.counter': {
-    en: 'Counter',
-    hi: 'प्रति-प्रस्ताव',
-    mr: 'प्रति-बोली',
-  },
-  'bidRow.reject': {
-    en: 'Reject',
-    hi: 'अस्वीकार करें',
-    mr: 'नाकारा',
-  },
-  'bidRow.statusAccepted': {
-    en: '✓ Offer accepted',
-    hi: '✓ प्रस्ताव स्वीकृत',
-    mr: '✓ बोली मंजूर',
-  },
-  'bidRow.statusRejected': {
-    en: '✗ Offer rejected',
-    hi: '✗ प्रस्ताव अस्वीकृत',
-    mr: '✗ बोली नाकारली',
-  },
-  'bidRow.statusCounter': {
-    en: '↕ Counter',
-    hi: '↕ प्रति-प्रस्ताव',
-    mr: '↕ प्रति-बोली',
-  },
-  'bidRow.statusPending': {
-    en: 'Pending review',
-    hi: 'समीक्षाधीन',
-    mr: 'पुनरावलोकनासाठी प्रलंबित',
   },
 
   // ── Logistics Screen ──────────────────────────────────────────────────────

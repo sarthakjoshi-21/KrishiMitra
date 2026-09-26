@@ -164,7 +164,12 @@ export async function getBidsForLot(lotId: string): Promise<ActionResult<Bid[]>>
         bid_price_per_kg,
         total_bid_amount,
         status,
+        counter_price,
+        counter_price_per_kg,
+        counter_by,
+        counter_notes,
         created_at,
+        updated_at,
         buyer:users!buyer_id (
           id,
           full_name,
@@ -354,51 +359,150 @@ export async function getBuyerActiveBids(buyerIdParam?: string): Promise<ActionR
 export const getBuyerBids = getBuyerActiveBids
 export const getBidsForBuyer = getBuyerActiveBids
 
-/** Farmer: accept, reject, or counter a bid */
+/** Full Two-Way Counter Submission */
+export async function counterBid(
+  bidId: string,
+  counterPricePerKg: number,
+  counterBy: 'farmer' | 'buyer',
+  notes?: string
+): Promise<ActionResult> {
+  return updateBidStatus(bidId, 'countered', counterPricePerKg, counterBy, notes)
+}
+
+/** Accept a counter-offer */
+export async function acceptCounterOffer(bidId: string): Promise<ActionResult> {
+  return updateBidStatus(bidId, 'accepted')
+}
+
+/** Update bid status with two-way counter-offer and auction closing logic */
 export async function updateBidStatus(
   bidId: string,
   status: BidStatus,
-  counterPrice?: number
+  counterPrice?: number,
+  counterBy?: 'farmer' | 'buyer',
+  counterNotes?: string
 ): Promise<ActionResult> {
   try {
     const supabase = await getSupabaseServerClient()
-    const updatePayload: Record<string, unknown> = { status }
-    if (status === 'counter' && counterPrice) {
-      updatePayload.counter_price = counterPrice
+    const updatePayload: Record<string, unknown> = {
+      status,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (status === 'counter' || status === 'countered') {
+      const pricePerKg = Number(counterPrice || 0)
+      updatePayload.status = 'countered'
+      updatePayload.counter_price_per_kg = pricePerKg
+      updatePayload.counter_price = pricePerKg // backward compatibility
+      updatePayload.counter_by = counterBy || 'farmer'
+      if (counterNotes !== undefined) {
+        updatePayload.counter_notes = counterNotes || null
+      }
+
+      // Fetch bid to send notification to the counter-party
+      const { data: bidData } = await (supabase.from('bids') as any)
+        .select('lot_id, buyer_id, lot:crop_lots!lot_id(crop_name, farmer_id)')
+        .eq('id', bidId)
+        .single()
+
+      if (bidData) {
+        const cropName = bidData.lot?.crop_name || 'crop lot'
+        if (counterBy === 'buyer') {
+          // Notify Farmer
+          if (bidData.lot?.farmer_id) {
+            try {
+              await (supabase.from('notifications') as any).insert({
+                user_id: bidData.lot.farmer_id,
+                message: `Buyer countered with ₹${pricePerKg.toFixed(2)}/kg for your ${cropName}! Review on your Market & Bids screen.`,
+                is_read: false,
+              })
+            } catch (notifErr) {
+              console.warn('[counterBid] Notification error:', notifErr)
+            }
+          }
+        } else {
+          // Notify Buyer
+          if (bidData.buyer_id) {
+            try {
+              await (supabase.from('notifications') as any).insert({
+                user_id: bidData.buyer_id,
+                message: `⚡ Counter offer received from farmer for ${cropName}: ₹${pricePerKg.toFixed(2)}/kg! Review on your Active Bids screen.`,
+                is_read: false,
+              })
+            } catch (notifErr) {
+              console.warn('[counterBid] Notification error:', notifErr)
+            }
+          }
+        }
+      }
     }
 
     if (status === 'accepted') {
       const { data: bidData } = await (supabase
         .from('bids') as any)
-        .select('lot_id, buyer_id, lot:crop_lots!lot_id(crop_name)')
+        .select(`
+          id,
+          lot_id,
+          buyer_id,
+          bid_price_per_kg,
+          counter_price_per_kg,
+          counter_price,
+          counter_by,
+          lot:crop_lots!lot_id(id, crop_name, quantity_quintal, farmer_id)
+        `)
         .eq('id', bidId)
         .single()
         
       if (bidData?.lot_id) {
-        // Automatically reject competing pending bids for this lot
+        // If a counter price was active, lock it in as the final accepted price
+        const finalPricePerKg = Number(bidData.counter_price_per_kg || bidData.counter_price || bidData.bid_price_per_kg)
+        const totalQtyKg = Number(bidData.lot?.quantity_quintal || 1) * 100
+        const totalAmount = Number((finalPricePerKg * totalQtyKg).toFixed(2))
+
+        updatePayload.bid_price_per_kg = finalPricePerKg
+        updatePayload.total_bid_amount = totalAmount
+
+        // 1. Automatically reject competing pending/countered bids for this lot
         await (supabase
           .from('bids') as any)
-          .update({ status: 'rejected' })
+          .update({ status: 'rejected', updated_at: new Date().toISOString() })
           .eq('lot_id', bidData.lot_id)
           .neq('id', bidId)
-          .eq('status', 'pending')
+          .in('status', ['pending', 'counter', 'countered'])
 
-        // Mark the crop lot as sold/closed
+        // 2. Mark the crop lot as sold/closed and record winning_bid_id
         await (supabase
           .from('crop_lots') as any)
-          .update({ is_live: false })
+          .update({
+            is_live: false,
+            winning_bid_id: bidId,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', bidData.lot_id)
 
-        // Send confirmation notification to the winning buyer
+        // 3. Send notifications
+        const cropName = bidData.lot?.crop_name || 'crop lot'
         if (bidData.buyer_id) {
           try {
             await (supabase.from('notifications') as any).insert({
               user_id: bidData.buyer_id,
-              message: `Your bid on ${bidData.lot?.crop_name || 'crop lot'} has been ACCEPTED by the farmer! You can proceed with logistics/payment.`,
+              message: `Your deal on ${cropName} at ₹${finalPricePerKg.toFixed(2)}/kg is ACCEPTED! Proceed to payment & logistics.`,
               is_read: false,
             })
           } catch (notifErr) {
             console.warn('Buyer accept notification failed:', notifErr)
+          }
+        }
+
+        if (bidData.lot?.farmer_id) {
+          try {
+            await (supabase.from('notifications') as any).insert({
+              user_id: bidData.lot.farmer_id,
+              message: `Deal locked for ${cropName} at ₹${finalPricePerKg.toFixed(2)}/kg! Auction completed.`,
+              is_read: false,
+            })
+          } catch (notifErr) {
+            console.warn('Farmer accept notification failed:', notifErr)
           }
         }
       }
@@ -409,7 +513,18 @@ export async function updateBidStatus(
       .update(updatePayload)
       .eq('id', bidId)
 
-    if (error) return { data: null, error: error.message }
+    if (error) {
+      console.warn('[updateBidStatus] Supabase error:', error.message)
+      // If error occurs because columns don't exist yet, try basic status update
+      if (error.message.includes('column') || error.message.includes('schema')) {
+        const fallbackPayload: Record<string, unknown> = { status }
+        if (counterPrice) fallbackPayload.counter_price = counterPrice
+        const { error: fallbackErr } = await (supabase.from('bids') as any).update(fallbackPayload).eq('id', bidId)
+        if (fallbackErr) return { data: null, error: fallbackErr.message }
+      } else {
+        return { data: null, error: error.message }
+      }
+    }
 
     revalidatePath('/', 'layout')
     revalidatePath('/')
@@ -427,7 +542,7 @@ export async function acceptBid(bidId: string): Promise<ActionResult> {
   return updateBidStatus(bidId, 'accepted')
 }
 
-/** Farmer: reject a bid */
+/** Farmer or Buyer: reject a bid */
 export async function rejectBid(bidId: string): Promise<ActionResult> {
   return updateBidStatus(bidId, 'rejected')
 }
@@ -438,7 +553,7 @@ export async function markBidPaid(bidId: string): Promise<ActionResult> {
     const supabase = await getSupabaseServerClient()
     const { error } = await (supabase
       .from('bids') as any)
-      .update({ status: 'paid' })
+      .update({ status: 'paid', updated_at: new Date().toISOString() })
       .eq('id', bidId)
 
     if (error) return { data: null, error: error.message }
@@ -449,3 +564,4 @@ export async function markBidPaid(bidId: string): Promise<ActionResult> {
     return { data: null, error: String(err) }
   }
 }
+

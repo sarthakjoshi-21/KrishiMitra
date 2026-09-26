@@ -4,7 +4,7 @@
 // -------------------------------------------------------
 
 export type UserRole = 'farmer' | 'buyer'
-export type BidStatus = 'pending' | 'accepted' | 'rejected' | 'counter' | 'paid'
+export type BidStatus = 'pending' | 'accepted' | 'rejected' | 'counter' | 'countered' | 'paid'
 export type CropGrade = 'A' | 'B' | 'C' | 'Organic' | 'Other'
 
 export interface AppUser {
@@ -43,6 +43,7 @@ export interface CropLot {
   ai_notes?: string | null
   needs_transport: boolean
   is_live: boolean
+  winning_bid_id?: string | null
   created_at: string
   updated_at: string
   // Joined
@@ -69,6 +70,9 @@ export interface Bid {
   quantity_requested?: number | null
   buyer_notes?: string | null
   counter_price?: number | null
+  counter_price_per_kg?: number | null
+  counter_by?: 'farmer' | 'buyer' | null
+  counter_notes?: string | null
   latitude?: number | null
   longitude?: number | null
   updated_at?: string

@@ -38,6 +38,11 @@ export default function BidRow({
     : pricePerKg * lotQuantityQuintal * 100
 
   const status = bid.status || 'pending'
+  const isCounter = status === 'counter' || status === 'countered'
+  const isBuyerCounter = isCounter && bid.counter_by === 'buyer'
+  const isFarmerCounter = isCounter && (bid.counter_by === 'farmer' || !bid.counter_by)
+  const counterPricePerKg = Number(bid.counter_price_per_kg || bid.counter_price || 0)
+  const counterTotal = counterPricePerKg * lotQuantityQuintal * 100
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 border border-border/80 bg-card rounded-md mb-2 shadow-sm">
@@ -65,32 +70,71 @@ export default function BidRow({
       </div>
 
       {/* 2. Center Column (Price & Status) */}
-      <div className="flex flex-col items-start md:items-center min-w-[150px]">
-        <span className="text-base font-bold text-primary">
-          ₹{pricePerKg.toFixed(2)} / {t('common.kg', language)}
-        </span>
-        <span className="text-xs text-muted-foreground font-medium">
-          {t('bidRow.total', language)}: ₹{(Number(totalAmount) || 0).toLocaleString('en-IN')}
-        </span>
+      <div className="flex flex-col items-start md:items-center min-w-[170px]">
+        {isBuyerCounter ? (
+          <div className="flex flex-col items-start md:items-center">
+            <span className="text-xs text-muted-foreground line-through">
+              Original: ₹{pricePerKg.toFixed(2)} / {t('common.kg', language)}
+            </span>
+            <span className="text-base font-extrabold text-purple-700 dark:text-purple-300">
+              ₹{counterPricePerKg.toFixed(2)} / {t('common.kg', language)}
+            </span>
+            <span className="text-xs text-muted-foreground font-semibold">
+              {t('bidRow.total', language)}: ₹{(Number(counterTotal) || 0).toLocaleString('en-IN')}
+            </span>
+          </div>
+        ) : isFarmerCounter ? (
+          <div className="flex flex-col items-start md:items-center">
+            <span className="text-xs text-muted-foreground line-through">
+              Bid: ₹{pricePerKg.toFixed(2)} / {t('common.kg', language)}
+            </span>
+            <span className="text-base font-bold text-amber-700 dark:text-amber-300">
+              Counter: ₹{counterPricePerKg.toFixed(2)} / {t('common.kg', language)}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium">
+              {t('bidRow.total', language)}: ₹{(Number(counterTotal) || 0).toLocaleString('en-IN')}
+            </span>
+          </div>
+        ) : (
+          <>
+            <span className="text-base font-bold text-primary">
+              ₹{pricePerKg.toFixed(2)} / {t('common.kg', language)}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium">
+              {t('bidRow.total', language)}: ₹{(Number(totalAmount) || 0).toLocaleString('en-IN')}
+            </span>
+          </>
+        )}
+
         <span
-          className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+          className={`mt-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${
             status === 'accepted'
               ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
               : status === 'rejected'
                 ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
-                : status === 'counter'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                : isBuyerCounter
+                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 animate-pulse'
+                  : isFarmerCounter
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                    : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
           }`}
         >
           {status === 'accepted'
             ? t('bidRow.statusAccepted', language)
             : status === 'rejected'
               ? t('bidRow.statusRejected', language)
-              : status === 'counter'
-                ? `${t('bidRow.statusCounter', language)}: ₹${(Number(bid.counter_price) || 0).toLocaleString('en-IN')}`
-                : t('bidRow.statusPending', language)}
+              : isBuyerCounter
+                ? `⚡ Buyer Counter: ₹${counterPricePerKg.toFixed(2)}/kg`
+                : isFarmerCounter
+                  ? `↕ Counter Sent (Awaiting Buyer)`
+                  : t('bidRow.statusPending', language)}
         </span>
+
+        {bid.counter_notes && (
+          <span className="mt-1 text-[11px] italic text-muted-foreground max-w-[200px] text-center truncate" title={bid.counter_notes}>
+            &ldquo;{bid.counter_notes}&rdquo;
+          </span>
+        )}
       </div>
 
       {/* 3. Right Column (Buttons) */}
@@ -98,23 +142,23 @@ export default function BidRow({
         <button
           type="button"
           onClick={() => onAccept(bid)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || status === 'accepted' || status === 'rejected'}
           className="rounded-md bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
         >
-          {t('bidRow.accept', language)}
+          {isBuyerCounter ? 'Accept Counter' : t('bidRow.accept', language)}
         </button>
         <button
           type="button"
           onClick={() => onCounter(bid)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || status === 'accepted' || status === 'rejected'}
           className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 disabled:opacity-50"
         >
-          {t('bidRow.counter', language)}
+          {isFarmerCounter ? 'Revise Counter' : t('bidRow.counter', language)}
         </button>
         <button
           type="button"
           onClick={() => onReject(bid)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || status === 'accepted' || status === 'rejected'}
           className="rounded-md bg-red-50 hover:bg-red-100 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors dark:bg-red-950/60 dark:hover:bg-red-900/40 dark:text-red-300 disabled:opacity-50"
         >
           {t('bidRow.reject', language)}
