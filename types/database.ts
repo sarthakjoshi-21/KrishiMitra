@@ -87,6 +87,56 @@ export interface AppNotification {
 
 export type ServiceCategory = 'Seeds' | 'Fertilizer' | 'Machinery' | 'Labour' | 'Logistics' | 'Storage'
 
+export type LogisticsStatus = 'searching' | 'in_pool' | 'confirmed' | 'completed'
+export type PoolStatus = 'OPEN' | 'CONFIRMED' | 'IN_TRANSIT' | 'COMPLETED'
+export type VehicleType = 'mini_truck' | 'large_truck'
+
+export interface LogisticsRequirement {
+  id: string
+  farmer_id?: string | null
+  farmer_name: string
+  farmer_phone?: string | null
+  crop: string
+  quantity_quintal: number
+  pickup_lat: number
+  pickup_lng: number
+  pickup_address?: string | null
+  dest_lat: number
+  dest_lng: number
+  dest_address?: string | null
+  preferred_date_from: string  // ISO date
+  preferred_date_to: string    // ISO date
+  vehicle_type: VehicleType
+  status: LogisticsStatus
+  pool_id?: string | null
+  created_at: string
+  // Joined / computed
+  pickup_dist_km?: number
+  dest_dist_km?: number
+}
+
+export interface LogisticsPool {
+  id: string
+  status: PoolStatus
+  vehicle_type: VehicleType
+  truck_capacity_qt: number
+  combined_load_qt: number
+  route_distance_km?: number | null
+  created_at: string
+  confirmed_at?: string | null
+  completed_at?: string | null
+  // Joined
+  members?: LogisticsRequirement[]
+}
+
+export interface CommunityConnection {
+  id: string
+  pool_id: string
+  farmer_a_id: string
+  farmer_b_id: string
+  created_at: string
+}
+
 export interface ServiceItemTuple {
   name: string
   price: string
@@ -170,6 +220,24 @@ export type Database = {
         Update: Partial<Omit<ServiceRequest, 'id' | 'created_at'>>
         Relationships: any[]
       }
+      logistics_requirements: {
+        Row: LogisticsRequirement
+        Insert: Omit<LogisticsRequirement, 'id' | 'created_at' | 'pickup_dist_km' | 'dest_dist_km'>
+        Update: Partial<Omit<LogisticsRequirement, 'id' | 'created_at'>>
+        Relationships: any[]
+      }
+      logistics_pools: {
+        Row: LogisticsPool
+        Insert: Omit<LogisticsPool, 'id' | 'created_at' | 'members'>
+        Update: Partial<Omit<LogisticsPool, 'id' | 'created_at'>>
+        Relationships: any[]
+      }
+      community_connections: {
+        Row: CommunityConnection
+        Insert: Omit<CommunityConnection, 'id' | 'created_at'>
+        Update: Partial<Omit<CommunityConnection, 'id' | 'created_at'>>
+        Relationships: any[]
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -182,6 +250,13 @@ export type Database = {
         }
         Returns: ServiceProvider[]
       }
+      find_logistics_pools: {
+        Args: {
+          req_id: string
+          truck_capacity_qt?: number
+        }
+        Returns: LogisticsRequirement[]
+      }
     }
     Enums: {
       user_role: UserRole
@@ -190,4 +265,3 @@ export type Database = {
     }
   }
 }
-

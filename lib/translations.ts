@@ -1992,6 +1992,138 @@ export const translations: TranslationMap = {
     mr: 'इतर वाहतूक गट शोधा',
   },
 
+  // New keys for the live logistics workflow
+  'logistics.createRequirement': {
+    en: 'Create Shipping Requirement',
+    hi: 'परिवहन आवश्यकता बनाएं',
+    mr: 'शिपिंग आवश्यकता तयार करा',
+  },
+  'logistics.createReqSubtitle': {
+    en: 'Share your crop, quantity and dates so we can find a pool for you.',
+    hi: 'अपनी फसल, मात्रा और तारीखें बताएं ताकि हम आपके लिए पूल खोज सकें।',
+    mr: 'तुमचे पीक, प्रमाण आणि तारखा द्या म्हणजे आम्ही तुमच्यासाठी गट शोधू.',
+  },
+  'logistics.quantityQt': {
+    en: 'Quantity (quintals)',
+    hi: 'मात्रा (क्विंटल)',
+    mr: 'प्रमाण (क्विंटल)',
+  },
+  'logistics.pickupLocation': {
+    en: 'Pickup location',
+    hi: 'पिकअप स्थान',
+    mr: 'पिकअप ठिकाण',
+  },
+  'logistics.destLocation': {
+    en: 'Destination / Mandi',
+    hi: 'गंतव्य / मंडी',
+    mr: 'गंतव्य / मंडी',
+  },
+  'logistics.dateFrom': {
+    en: 'Earliest date',
+    hi: 'सबसे पहले की तारीख',
+    mr: 'सर्वात लवकरची तारीख',
+  },
+  'logistics.dateTo': {
+    en: 'Latest date',
+    hi: 'अंतिम तारीख',
+    mr: 'सर्वात उशिराची तारीख',
+  },
+  'logistics.vehicleType': {
+    en: 'Vehicle needed',
+    hi: 'वाहन आवश्यकता',
+    mr: 'वाहनाची गरज',
+  },
+  'logistics.miniTruck': {
+    en: 'Mini truck (9 tons)',
+    hi: 'मिनी ट्रक (9 टन)',
+    mr: 'मिनी ट्रक (9 टन)',
+  },
+  'logistics.largeTruck': {
+    en: 'Large truck (19 tons)',
+    hi: 'बड़ा ट्रक (19 टन)',
+    mr: 'मोठा ट्रक (19 टन)',
+  },
+  'logistics.submitReq': {
+    en: 'Find pool matches',
+    hi: 'पूल मैच खोजें',
+    mr: 'वाहतूक गट शोधा',
+  },
+  'logistics.searching': {
+    en: 'Searching for pool matches…',
+    hi: 'पूल मैच खोजे जा रहे हैं…',
+    mr: 'वाहतूक गट शोधला जात आहे…',
+  },
+  'logistics.noMatchesYet': {
+    en: 'No pool matches yet. Be the first! Other farmers will join as they add similar requirements.',
+    hi: 'अभी कोई पूल मैच नहीं मिला। पहले बनें! अन्य किसान समान आवश्यकताएं जोड़ने पर शामिल हो जाएंगे।',
+    mr: 'अजून वाहतूक गट सापडला नाही. पहिले व्हा! इतर शेतकरी समान आवश्यकता जोडतील तेव्हा सामील होतील.',
+  },
+  'logistics.poolStatus.open': {
+    en: 'OPEN — collecting farmers',
+    hi: 'खुला — किसान जुड़ रहे हैं',
+    mr: 'उघडा — शेतकरी जोडत आहेत',
+  },
+  'logistics.poolStatus.confirmed': {
+    en: 'CONFIRMED — truck booked!',
+    hi: 'पक्का — ट्रक बुक हो गया!',
+    mr: 'निश्चित — ट्रक बुक झाला!',
+  },
+  'logistics.poolStatus.inTransit': {
+    en: 'IN TRANSIT',
+    hi: 'रास्ते में',
+    mr: 'मार्गात',
+  },
+  'logistics.poolStatus.completed': {
+    en: 'COMPLETED',
+    hi: 'पूर्ण',
+    mr: 'पूर्ण',
+  },
+  'logistics.privacyNotice': {
+    en: 'Contact details are shared only after pool is CONFIRMED.',
+    hi: 'संपर्क विवरण केवल पूल पक्का होने के बाद साझा किए जाते हैं।',
+    mr: 'संपर्क तपशील फक्त वाहतूक गट निश्चित झाल्यावर शेअर केले जातात.',
+  },
+  'logistics.communityLinked': {
+    en: 'Pool confirmed! You can now view co-farmer contact details in Community.',
+    hi: 'पूल पक्का! अब आप समुदाय में सह-किसान के संपर्क विवरण देख सकते हैं।',
+    mr: 'वाहतूक गट निश्चित! आता समुदायात सह-शेतकऱ्याचे संपर्क तपशील पाहू शकता.',
+  },
+  'logistics.myReq': {
+    en: 'My active requirement',
+    hi: 'मेरी सक्रिय आवश्यकता',
+    mr: 'माझी सक्रिय आवश्यकता',
+  },
+  'logistics.remainingCapacity': {
+    en: 'Remaining truck capacity',
+    hi: 'शेष ट्रक क्षमता',
+    mr: 'उर्वरित ट्रकची क्षमता',
+  },
+  'logistics.saveRsLabel': {
+    en: 'You save',
+    hi: 'आप बचाते हैं',
+    mr: 'तुम्ही वाचवता',
+  },
+  'logistics.routeKm': {
+    en: 'Route distance',
+    hi: 'मार्ग दूरी',
+    mr: 'मार्ग अंतर',
+  },
+  'logistics.loadingReqs': {
+    en: 'Finding your pool matches…',
+    hi: 'आपके पूल मैच ढूंढे जा रहे हैं…',
+    mr: 'तुमचे वाहतूक गट शोधले जात आहेत…',
+  },
+  'logistics.useGps': {
+    en: 'Use my GPS location for pickup',
+    hi: 'पिकअप के लिए मेरी GPS लोकेशन उपयोग करें',
+    mr: 'पिकअपसाठी माझे GPS स्थान वापरा',
+  },
+  'logistics.gpsDetected': {
+    en: 'GPS location detected',
+    hi: 'GPS लोकेशन मिली',
+    mr: 'GPS स्थान आढळले',
+  },
+
   // ── Crop Health Screen ────────────────────────────────────────────────────
 
   'cropHealth.title': {
