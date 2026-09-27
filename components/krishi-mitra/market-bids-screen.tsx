@@ -319,9 +319,9 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     setMandiError(null)
     setMandiTimeout(false)
 
-    // 2. Fetch fresh data in background with 8-second AbortController failsafe
+    // 2. Fetch fresh data in background with 25-second AbortController failsafe
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 8000)
+    const timer = setTimeout(() => controller.abort(), 25000)
 
     try {
       const res = await fetch(`/api/mandi?${params.toString()}`, {
@@ -363,11 +363,11 @@ export default function MarketBidsScreen({ onLogout, onNavigate }: Props) {
     } catch (err: any) {
       clearTimeout(timer)
       if (err?.name === 'AbortError') {
-        console.warn('[MarketBidsScreen] Mandi API fetch timed out after 8s (2G/3G network failsafe)')
+        console.warn('[MarketBidsScreen] Mandi API fetch timed out after 25s (2G/3G network failsafe)')
         setMandiTimeout(true)
         if (!hasCachedData) {
           if (strictLiveMode) {
-            setMandiError('Request timed out (8s). Strict live mode is active, so no fallback data is shown.')
+            setMandiError('Request timed out (25s). Strict live mode is active, so no fallback data is shown.')
           }
         }
       } else {

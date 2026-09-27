@@ -1,3 +1,5 @@
+export const maxDuration = 60
+
 import { NextResponse } from 'next/server'
 
 // OGD Agmarknet resource ID for Daily Wholesale Market Prices
