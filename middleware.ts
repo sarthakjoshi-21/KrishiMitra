@@ -28,16 +28,24 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Refresh session (required for SSR auth to work correctly)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Guard: If unauthenticated user tries to inject ?role= or &name= query parameters to view dashboard, strip them and redirect
+  if (!user && pathname === '/' && (request.nextUrl.searchParams.has('role') || request.nextUrl.searchParams.has('name'))) {
+    const cleanUrl = request.nextUrl.clone()
+    cleanUrl.searchParams.delete('role')
+    cleanUrl.searchParams.delete('name')
+    return NextResponse.redirect(cleanUrl)
+  }
+
   // Explicitly allow public pages and API routes without interception
   const publicRoutes = ['/', '/farmer-login', '/buyer-login']
   if (publicRoutes.includes(pathname) || pathname.startsWith('/api/')) {
     return supabaseResponse
   }
-
-  // Refresh session (required for SSR auth to work correctly)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   // Protected routes that require auth (exact match or subdirectory, not matching /farmer-login or /buyer-login)
   const isFarmerRoute = pathname === '/farmer' || pathname.startsWith('/farmer/')

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowDown, ArrowRight, ArrowUp, Bell, Check, Compass, Grid, IndianRupee, Layers, Loader2, LocateFixed, Map as MapIcon, MapPin, Minus, Navigation, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react'
 import { Language } from './krishi-mitra-app'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { getAvailableCrops } from '@/lib/actions/crop-actions'
 import { placeBid, getBidsForLot } from '@/lib/actions/bid-actions'
 import { getNotificationsForUser, markNotificationRead } from '@/lib/actions/notification-actions'
@@ -42,6 +43,24 @@ export default function BuyerDashboardScreen({ userName, onLogout, onProfile, on
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [notifOpen, setNotifOpen] = useState(false)
+
+  // Verify session using supabase.auth.getUser() on mount; redirect to landing if unauthenticated
+  useEffect(() => {
+    async function verifyBuyerSession() {
+      try {
+        const supabase = getSupabaseBrowserClient()
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (!user || error) {
+          console.warn('[BuyerDashboardScreen] No active user session found, redirecting to landing')
+          onLogout()
+        }
+      } catch (err) {
+        console.error('[BuyerDashboardScreen] Session verification failed:', err)
+        onLogout()
+      }
+    }
+    verifyBuyerSession()
+  }, [onLogout])
 
   // Detect GPS position on mount
   useEffect(() => {

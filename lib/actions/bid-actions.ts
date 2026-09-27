@@ -18,18 +18,10 @@ export async function placeBid(
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    let buyerId = user?.id
-    if (!buyerId) {
-      // Fallback in demo mode to find a registered buyer
-      const { data: buyerUser } = await (supabase.from('users') as any)
-        .select('id')
-        .eq('role', 'buyer')
-        .limit(1)
-        .maybeSingle()
-      buyerId = buyerUser?.id
+    if (!user?.id) {
+      return { data: null, error: 'Unauthorized' }
     }
-
-    if (!buyerId) return { data: null, error: 'Not authenticated. Please log in.' }
+    const buyerId = user.id
 
     let lotId: string
     let bidPricePerKg: number

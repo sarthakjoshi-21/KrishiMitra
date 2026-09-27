@@ -29,7 +29,7 @@ const cropOptions = ['Onion', 'Wheat', 'Rice', 'Tomato', 'Cotton', 'Soybean', 'S
 
 const defaultCrop: FarmerCrop = {
   id: '',
-  farmer_id: 'demo-farmer-123',
+  farmer_id: '',
   crop_name: 'Wheat',
   variety: 'Lokwan',
   sowing_date: new Date().toISOString().split('T')[0],

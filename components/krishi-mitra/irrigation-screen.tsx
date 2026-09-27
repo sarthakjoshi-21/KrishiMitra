@@ -158,7 +158,7 @@ export default function IrrigationScreen({ onLogout, onNavigate }: Props) {
     const sampleCrops: FarmerCrop[] = [
       {
         id: 'demo-1',
-        farmer_id: 'demo-farmer-123',
+        farmer_id: '',
         crop_name: 'Wheat',
         name: 'Wheat',
         variety: 'Lokwan',
@@ -170,7 +170,7 @@ export default function IrrigationScreen({ onLogout, onNavigate }: Props) {
       },
       {
         id: 'demo-2',
-        farmer_id: 'demo-farmer-123',
+        farmer_id: '',
         crop_name: 'Onion',
         name: 'Onion',
         variety: 'Nashik Red',
@@ -182,7 +182,7 @@ export default function IrrigationScreen({ onLogout, onNavigate }: Props) {
       },
       {
         id: 'demo-3',
-        farmer_id: 'demo-farmer-123',
+        farmer_id: '',
         crop_name: 'Tomato',
         name: 'Tomato',
         variety: 'Abhinav',

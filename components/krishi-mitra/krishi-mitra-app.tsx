@@ -12,8 +12,11 @@ import { getSession, signOut } from '@/lib/actions/auth-actions'
 import { getCurrentUserPosition } from '@/lib/geo-utils'
 import type { AppNotification, CropLot } from '@/types/database'
 import LoginScreen from './login-screen'
+import FarmerAuth from './farmer-auth'
+import BuyerAuth from './buyer-auth'
 import { LanguageProvider, useLanguage } from './language-context'
 import { t } from '@/lib/translations'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { FarmerSidebar as SharedFarmerSidebar, farmerNavItems } from './farmer-sidebar'
 
 function ScreenSkeleton() {
@@ -45,7 +48,7 @@ const BuyerProfileScreen = dynamic(() => import('./buyer-profile-screen'), { ssr
 const MyBidsScreen = dynamic(() => import('./my-bids-screen'), { ssr: false, loading: () => <ScreenSkeleton /> })
 
 const FALLBACK_LOTS: CropLot[] = [
-  { id: 'mock-1', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik, Maharashtra', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Ramesh Patil', created_at: '' } },
+  { id: 'mock-1', farmer_id: 'f1', crop_name: 'Premium Basmati Rice', grade: 'A', quantity_quintal: 240, asking_price_per_quintal: 3420, location: 'Nashik, Maharashtra', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Verified Farmer', created_at: '' } },
   { id: 'mock-2', farmer_id: 'f2', crop_name: 'Organic Tur Dal', grade: 'Organic', quantity_quintal: 85, asking_price_per_quintal: 8100, location: 'Indore, Madhya Pradesh', pesticide_safe_flag: true, needs_transport: false, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f2', email: '', role: 'farmer', full_name: 'Savitri Devi', created_at: '' } },
   { id: 'mock-3', farmer_id: 'f3', crop_name: 'Fresh Red Onion', grade: 'A', quantity_quintal: 520, asking_price_per_quintal: 2780, location: 'Pune, Maharashtra', pesticide_safe_flag: false, needs_transport: true, is_live: true, created_at: '', updated_at: '', image_url: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=600&q=80', farmer: { id: 'f3', email: '', role: 'farmer', full_name: 'Anil Jadhav', created_at: '' } },
 ]
@@ -110,9 +113,7 @@ function ListingCard({ lot, onOffer }: { lot: CropLot, onOffer: (lot: CropLot) =
   )
 }
 
-function Login({ onEnter }: { onEnter: (role: 'farmer' | 'buyer') => void }) {
-  return <main className="min-h-screen bg-background px-5 py-6"><header className="mx-auto flex max-w-6xl items-center justify-between"><Brand /><Language /></header><section className="mx-auto flex max-w-6xl flex-col items-center gap-10 pb-10 pt-16 text-center lg:flex-row lg:items-center lg:justify-between lg:pt-24 lg:text-left"><div className="max-w-xl"><div className="mb-5 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-primary"><span className="size-2 rounded-full bg-primary" /> India&apos;s connected farm network</div><h1 className="text-balance font-serif text-5xl font-bold leading-[1.06] tracking-tight text-foreground sm:text-6xl">Every stage, every problem — <span className="text-primary">one solution.</span></h1><p className="mt-6 max-w-lg text-pretty text-base leading-7 text-muted-foreground">Connect your farm&apos;s complete life cycle from seed to soil. Sell better, plan smarter, and grow with a trusted local network.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={() => onEnter('farmer')} className="action-button"><Sprout className="size-5" /> Login as Farmer <ArrowRight className="ml-auto size-4" /></button><button onClick={() => onEnter('buyer')} className="action-button outline"><Package className="size-5" /> Login as Buyer <ArrowRight className="ml-auto size-4" /></button></div><button className="mt-4 text-sm font-semibold text-muted-foreground underline decoration-border underline-offset-4 hover:text-primary">Service Provider / Admin access</button></div><div className="relative w-full max-w-md"><div className="hero-card"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-primary">Today in your region</p><p className="mt-2 font-serif text-2xl font-bold">Market pulse</p></div><CloudSun className="size-8 text-primary" /></div><div className="mt-8 flex items-end gap-5"><div className="bar h-20" /><div className="bar h-28" /><div className="bar active h-36" /><div className="bar h-24" /><div className="bar h-44" /><div className="bar h-32" /></div><div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-sm"><span className="text-muted-foreground">Basmati Rice / Quintal</span><span className="font-bold text-primary">₹3,420 <span className="text-xs">↑ 8.4%</span></span></div></div><div className="absolute -bottom-5 -left-5 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left shadow-lg"><div className="rounded-xl bg-secondary p-2 text-primary"><ShieldCheck className="size-5" /></div><div><p className="text-xs font-bold">Pesticide safe</p><p className="text-[11px] text-muted-foreground">Verified marketplace lots</p></div></div></div></section><div className="mx-auto grid max-w-6xl grid-cols-2 gap-3 border-t border-border pt-6 sm:grid-cols-4"><span className="feature"><Mic className="size-4" /> Voice enabled</span><span className="feature"><IndianRupee className="size-4" /> Direct market access</span><span className="feature"><Truck className="size-4" /> Shared logistics</span><span className="feature"><Activity className="size-4" /> Smart crop insights</span></div></main>
-}
+
 
 function FarmerProfileMenu({ profilePhoto, userName, onPhotoChange, onLogout }: { profilePhoto: string | null; userName: string; onPhotoChange: (photo: string) => void; onLogout: () => void }) {
   const { language } = useLanguage()
@@ -124,6 +125,24 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
   const router = useRouter()
   const { language } = useLanguage()
   const [tab, setTab] = useState('Overview')
+
+  // Verify session using supabase.auth.getUser() on mount; redirect to landing if unauthenticated
+  useEffect(() => {
+    async function verifyFarmerSession() {
+      try {
+        const supabase = getSupabaseBrowserClient()
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (!user || error) {
+          console.warn('[FarmerDashboard] No verified user session found, redirecting to landing')
+          onLogout()
+        }
+      } catch (err) {
+        console.error('[FarmerDashboard] Session check failed:', err)
+        onLogout()
+      }
+    }
+    verifyFarmerSession()
+  }, [onLogout])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -633,33 +652,83 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
 
 export default function KrishiMitraApp() {
   const [role, setRole] = useState<'login' | 'farmer' | 'buyer'>('login')
+  const [authView, setAuthView] = useState<'landing' | 'farmer_auth' | 'buyer_auth'>('landing')
   const [userName, setUserName] = useState<string>('Farmer')
   const [buyerProfile, setBuyerProfile] = useState(false)
   const [buyerBids, setBuyerBids] = useState(false)
   const [search, setSearch] = useState('')
   const [allLots, setAllLots] = useState<CropLot[]>(FALLBACK_LOTS)
+  const [authChecking, setAuthChecking] = useState(true)
 
   useEffect(() => {
-    // 1. Check URL query parameters for immediate role sync
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const roleParam = params.get('role') as 'farmer' | 'buyer' | null
-      const nameParam = params.get('name')
-      if (roleParam === 'farmer' || roleParam === 'buyer') {
-        setRole(roleParam)
-        if (nameParam) setUserName(nameParam)
+    async function checkAuth() {
+      try {
+        setAuthChecking(true)
+        const supabase = getSupabaseBrowserClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (user && !authError) {
+          const userRole = (user.user_metadata?.role as 'farmer' | 'buyer') || 'farmer'
+          const name =
+            user.user_metadata?.display_id ||
+            user.user_metadata?.full_name ||
+            user.email?.split('@')[0] ||
+            (userRole === 'buyer' ? 'Buyer' : 'Farmer')
+          setRole(userRole)
+          setUserName(name)
+        } else {
+          // Strictly force login if no valid session token exists
+          setRole('login')
+          setAuthView('landing')
+          setUserName('')
+          if (typeof window !== 'undefined' && window.location.search) {
+            const params = new URLSearchParams(window.location.search)
+            if (params.has('role') || params.has('name')) {
+              params.delete('role')
+              params.delete('name')
+              const cleanSearch = params.toString() ? `?${params.toString()}` : window.location.pathname
+              window.history.replaceState({}, '', cleanSearch)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[checkAuth] Session verification error:', err)
+        setRole('login')
+        setAuthView('landing')
+      } finally {
+        setAuthChecking(false)
       }
     }
 
-    // 2. Check Supabase session
-    async function checkAuth() {
-      const session = await getSession()
-      if (session.role === 'farmer' || session.role === 'buyer') {
-        setRole(session.role)
-        if (session.fullName) setUserName(session.fullName)
-      }
-    }
     checkAuth()
+
+    // Real-time listener for Supabase auth state changes
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          setRole('login')
+          setAuthView('landing')
+          setUserName('')
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({}, '', '/')
+          }
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          const userRole = (session.user.user_metadata?.role as 'farmer' | 'buyer') || 'farmer'
+          const name =
+            session.user.user_metadata?.display_id ||
+            session.user.user_metadata?.full_name ||
+            session.user.email?.split('@')[0] ||
+            'Farmer'
+          setRole(userRole)
+          setUserName(name)
+        }
+      })
+      return () => {
+        subscription.unsubscribe()
+      }
+    } catch (e) {
+      console.warn('[onAuthStateChange] Listener notice:', e)
+    }
 
     async function fetchAll() {
       const result = await getActiveCrops()
@@ -677,12 +746,57 @@ export default function KrishiMitraApp() {
 
   const handleLogout = async () => {
     await signOut()
+    try {
+      const supabase = getSupabaseBrowserClient()
+      await supabase.auth.signOut()
+    } catch {}
     setBuyerProfile(false)
     setBuyerBids(false)
     setRole('login')
+    setAuthView('landing')
+    setUserName('')
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', '/')
+    }
   }
 
-  if (role === 'login') return <LoginScreen onEnter={(r, name) => { setRole(r); if (name) setUserName(name); }} />
+  if (authChecking) {
+    return <ScreenSkeleton />
+  }
+
+  if (role === 'login') {
+    if (authView === 'farmer_auth') {
+      return (
+        <FarmerAuth
+          onBack={() => setAuthView('landing')}
+          onSuccess={(displayId) => {
+            setRole('farmer')
+            setUserName(displayId)
+          }}
+        />
+      )
+    }
+
+    if (authView === 'buyer_auth') {
+      return (
+        <BuyerAuth
+          onBack={() => setAuthView('landing')}
+          onSuccess={(buyerId) => {
+            setRole('buyer')
+            setUserName(buyerId)
+          }}
+        />
+      )
+    }
+
+    return (
+      <LoginScreen
+        onSelectRole={(selectedRole) => {
+          setAuthView(selectedRole === 'farmer' ? 'farmer_auth' : 'buyer_auth')
+        }}
+      />
+    )
+  }
   if (role === 'farmer') return <FarmerDashboard userName={userName} onLogout={handleLogout} />
   if (role === 'buyer') {
     if (buyerBids) {

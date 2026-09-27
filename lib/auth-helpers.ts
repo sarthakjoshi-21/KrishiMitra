@@ -1,7 +1,4 @@
-/** Maps a farmer name/ID to the canonical email stored in Supabase.
- *  Convention: <normalised_name>@farmer.krishimitra.in
- *  e.g. "Ramesh Patil" → "ramesh.patil@farmer.krishimitra.in"
- */
+/** Helper to generate fallback email if needed for legacy compatibility */
 export function toFarmerEmail(name: string): string {
   return (
     name

@@ -53,18 +53,10 @@ export async function createCropLot(
     
     console.log('[createCropLot] Auth User:', user?.id, user?.email, 'Auth Error:', userAuthError?.message || 'none')
     
-    let farmerId = user?.id
-    if (!farmerId) {
-      // Fallback to first available farmer in public.users table if no session is set
-      const { data: farmerUser } = await (supabase.from('users') as any)
-        .select('id')
-        .eq('role', 'farmer')
-        .limit(1)
-        .maybeSingle()
-      farmerId = farmerUser?.id
+    if (!user?.id) {
+      return { data: null, error: 'Unauthorized' }
     }
-
-    if (!farmerId) return { data: null, error: 'Not authenticated. Please log in.' }
+    const farmerId = user.id
 
     // Resolve GPS coordinates: use exact captured coordinates if provided, else fall back to city coordinate or null
     let lat: number | null = null
@@ -242,7 +234,7 @@ export async function getAvailableCrops(filters?: AvailableCropsFilter): Promise
         pesticide_safe_flag: true,
         ai_grade_confidence: 94,
         ai_notes: 'Uniform bulb size 55mm+ · Zero spoilage · Cured dry',
-        farmer: { full_name: 'Ramesh Jadhav', location: 'Lasalgaon, Maharashtra' },
+        farmer: { full_name: 'Suresh Jadhav', location: 'Lasalgaon, Maharashtra' },
         created_at: new Date(Date.now() - 3600000).toISOString(),
       },
       {
@@ -344,80 +336,49 @@ export async function getFarmerListings(): Promise<ActionResult<any[]>> {
     const supabase = await getSupabaseServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    console.log('[getFarmerListings] Authenticated User ID:', user?.id, 'Email:', user?.email, 'Auth error:', authError?.message || 'none')
+    if (authError || !user?.id) {
+      return { data: null, error: 'Unauthorized' }
+    }
     
-    let farmerId = user?.id
+    const farmerId = user.id
     let lots: any[] = []
     let fetchError: any = null
 
-    // 1. Attempt user-specific query with nested bids & buyer join
-    if (farmerId) {
-      try {
-        const { data: userLots, error: userError } = await (supabase
-          .from('crop_lots') as any)
-          .select(`
-            *,
-            bids (
-              id,
-              lot_id,
-              buyer_id,
-              bid_price_per_kg,
-              total_bid_amount,
-              status,
-              created_at,
-              buyer:users!buyer_id (id, full_name, email, location)
-            )
-          `)
-          .eq('farmer_id', farmerId)
-          .order('created_at', { ascending: false })
+    // 1. User-specific query with nested bids & buyer join
+    try {
+      const { data: userLots, error: userError } = await (supabase
+        .from('crop_lots') as any)
+        .select(`
+          *,
+          bids (
+            id,
+            lot_id,
+            buyer_id,
+            bid_price_per_kg,
+            total_bid_amount,
+            status,
+            created_at,
+            buyer:users!buyer_id (id, full_name, email, location)
+          )
+        `)
+        .eq('farmer_id', farmerId)
+        .order('created_at', { ascending: false })
 
-        console.log('[getFarmerListings] User-specific crop_lots count:', userLots?.length, 'Error:', userError?.message || 'none')
-        if (!userError && userLots && userLots.length > 0) {
-          lots = userLots
-        } else if (userError) {
-          fetchError = userError
-        }
-      } catch (e) {
-        console.warn('[getFarmerListings] User query exception:', e)
+      if (!userError && userLots) {
+        lots = userLots
+      } else if (userError) {
+        fetchError = userError
       }
+    } catch (e) {
+      console.warn('[getFarmerListings] User query exception:', e)
     }
 
-    // 2. Fallback: If no lots found for user.id or in demo/guest mode, load all published crop lots
-    if (lots.length === 0) {
-      try {
-        const { data: allLots, error: allError } = await (supabase
-          .from('crop_lots') as any)
-          .select(`
-            *,
-            bids (
-              id,
-              lot_id,
-              buyer_id,
-              bid_price_per_kg,
-              total_bid_amount,
-              status,
-              created_at,
-              buyer:users!buyer_id (id, full_name, email, location)
-            )
-          `)
-          .order('created_at', { ascending: false })
-
-        console.log('[getFarmerListings] Fallback all-lots count:', allLots?.length, 'Error:', allError?.message || 'none')
-        if (allLots && allLots.length > 0) {
-          lots = allLots
-        } else if (allError) {
-          fetchError = allError
-        }
-      } catch (e) {
-        console.warn('[getFarmerListings] All lots query exception:', e)
-      }
-    }
-
-    // 3. Fallback: If joined query returned nothing or failed, query raw crop_lots table directly
-    if (lots.length === 0) {
+    // 2. Direct query fallback for user's lots if join failed
+    if (lots.length === 0 && !fetchError) {
       const { data: rawLots, error: rawError } = await (supabase
         .from('crop_lots') as any)
         .select('*')
+        .eq('farmer_id', farmerId)
         .order('created_at', { ascending: false })
 
       console.log('[getFarmerListings] Raw crop_lots query count:', rawLots?.length, 'Error:', rawError?.message || 'none')
@@ -470,16 +431,14 @@ export const getMyListings = getFarmerListings;
 import { calculateHarvestDate, type FarmerCrop } from '@/lib/crop-utils';
 
 async function getFarmerId(supabase: any): Promise<string> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id) return user.id;
-  } catch {
-    // ignore
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user?.id) {
+    throw new Error('Unauthorized');
   }
-  return 'demo-farmer-123';
+  return user.id;
 }
 
-/** Get all crops for the demo farmer with a timeout of 8 seconds */
+/** Get all crops for the authenticated farmer with a timeout of 8 seconds */
 export async function getMyCrops(): Promise<ActionResult<FarmerCrop[]>> {
   try {
     const supabase = await getSupabaseServerClient();

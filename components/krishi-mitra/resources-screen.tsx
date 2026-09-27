@@ -859,7 +859,7 @@ export default function ResourcesScreen({ onLogout, onNavigate }: Props) {
                   type="text"
                   value={farmerName}
                   onChange={(e) => setFarmerName(e.target.value)}
-                  placeholder="e.g. Ramesh Patil"
+                  placeholder="e.g. Rahul Sharma"
                   className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>

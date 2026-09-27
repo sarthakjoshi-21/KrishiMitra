@@ -34,7 +34,7 @@ const MOCK_BIDS: Bid[] = [
       is_live: true,
       created_at: '',
       updated_at: '',
-      farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Ramesh Patil', location: 'Nashik, Maharashtra', created_at: '' }
+      farmer: { id: 'f1', email: '', role: 'farmer', full_name: 'Verified Farmer', location: 'Nashik, Maharashtra', created_at: '' }
     }
   },
   {

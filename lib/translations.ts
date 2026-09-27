@@ -2963,6 +2963,26 @@ export const translations: TranslationMap = {
     hi: 'किसान आईडी दर्ज करें (उदा. MH-PUN-001)',
     mr: 'शेतकरी आयडी प्रविष्ट करा (उदा. MH-PUN-001)',
   },
+  'auth.email': {
+    en: 'Email Address',
+    hi: 'ईमेल पता',
+    mr: 'ईमेल पत्ता',
+  },
+  'auth.emailPlaceholder': {
+    en: 'Enter your email (e.g. name@example.com)',
+    hi: 'अपना ईमेल दर्ज करें (उदा. name@example.com)',
+    mr: 'तुमचा ईमेल प्रविष्ट करा (उदा. name@example.com)',
+  },
+  'auth.fullName': {
+    en: 'Full Name',
+    hi: 'पूरा नाम',
+    mr: 'पूर्ण नाव',
+  },
+  'auth.fullNamePlaceholder': {
+    en: 'Enter your full name',
+    hi: 'अपना पूरा नाम दर्ज करें',
+    mr: 'तुमचे पूर्ण नाव प्रविष्ट करा',
+  },
   'auth.buyerEmail': {
     en: 'Buyer Email',
     hi: 'खरीदार ईमेल',
@@ -3433,6 +3453,16 @@ export const translations: TranslationMap = {
     en: 'Cached Demo Data',
     hi: 'कैश्ड डेमो डेटा',
     mr: 'कॅश केलेला डेमो डेटा',
+  },
+  'login.loginAsFarmer': {
+    en: 'Login as Farmer',
+    hi: 'किसान लॉगिन',
+    mr: 'शेतकरी लॉगिन',
+  },
+  'login.loginAsBuyer': {
+    en: 'Login as Buyer',
+    hi: 'खरीदार लॉगिन',
+    mr: 'खरेदीदार लॉगिन',
   },
 }
 

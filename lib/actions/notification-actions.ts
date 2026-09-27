@@ -15,17 +15,10 @@ export async function getNotificationsForUser(): Promise<ActionResult<AppNotific
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    let userId = user?.id
-    if (!userId) {
-      // Fallback in demo mode
-      const { data: fallbackUser } = await (supabase.from('users') as any)
-        .select('id')
-        .limit(1)
-        .maybeSingle()
-      userId = fallbackUser?.id
+    if (!user?.id) {
+      return { data: [], error: 'Unauthorized' }
     }
-
-    if (!userId) return { data: [], error: null }
+    const userId = user.id
 
     const { data, error } = await (supabase
       .from('notifications') as any)
