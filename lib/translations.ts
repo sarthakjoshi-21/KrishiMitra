@@ -1180,6 +1180,161 @@ export const translations: TranslationMap = {
     hi: 'कटाई',
     mr: 'काढणी',
   },
+  'myCrop.addCropTitle': {
+    en: 'Add New Crop',
+    hi: 'नई फसल जोड़ें',
+    mr: 'नवीन पीक जोडा',
+  },
+  'myCrop.editCropTitle': {
+    en: 'Edit Crop Details',
+    hi: 'फसल विवरण संपादित करें',
+    mr: 'पीक तपशील संपादित करा',
+  },
+  'myCrop.updateCrop': {
+    en: 'Update Crop',
+    hi: 'फसल अपडेट करें',
+    mr: 'पीक अपडेट करा',
+  },
+  'myCrop.sowingDate': {
+    en: 'Sowing Date',
+    hi: 'बुवाई की तारीख',
+    mr: 'पेरणीची तारीख',
+  },
+  'myCrop.expectedHarvest': {
+    en: 'Expected Harvest Date',
+    hi: 'अनुमानित कटाई तिथि',
+    mr: 'अपेक्षित काढणी तारीख',
+  },
+  'myCrop.saving': {
+    en: 'Saving to Database...',
+    hi: 'डेटाबेस में सहेजा जा रहा है...',
+    mr: 'डेटाबेसमध्ये सेव्ह करत आहे...',
+  },
+  'myCrop.saveSuccess': {
+    en: 'Crop saved successfully to database!',
+    hi: 'फसल डेटाबेस में सफलतापूर्वक सहेजी गई!',
+    mr: 'पीक डेटाबेसमध्ये यशस्वीरित्या सेव्ह केले!',
+  },
+  'myCrop.emptyState': {
+    en: "You haven't added any crops yet. Start tracking your crop lifecycle, water schedule, harvest dates, and yield estimates.",
+    hi: 'आपने अभी तक कोई फसल नहीं जोड़ी है। अपनी फसल जीवनचक्र, सिंचाई कार्यक्रम, कटाई की तारीख और उपज अनुमान ट्रैक करना शुरू करें।',
+    mr: 'तुम्ही अद्याप कोणतेही पीक जोडलेले नाही. पीक जीवनचक्र, पाणी वेळापत्रक, काढणीच्या तारखा आणि उत्पादन अंदाज ट्रॅक करणे सुरू करा.',
+  },
+  'myCrop.noCropsTitle': {
+    en: 'No Crops Registered Yet',
+    hi: 'अभी कोई फसल पंजीकृत नहीं है',
+    mr: 'अद्याप कोणतेही पीक नोंदणीकृत नाही',
+  },
+  'myCrop.stageWiseGuidance': {
+    en: 'Stage-wise Crop Guidance',
+    hi: 'चरणबद्ध फसल मार्गदर्शन',
+    mr: 'टप्प्याटप्प्याने पीक मार्गदर्शन',
+  },
+  'myCrop.guidanceSubtitle': {
+    en: 'AI Assistant roadmap tracking optimal farm actions from sowing to harvest.',
+    hi: 'बुवाई से लेकर कटाई तक के सर्वोत्तम कृषि कार्यों को ट्रैक करने वाला एआई सहायक रोडमैप।',
+    mr: 'पेरणीपासून काढणीपर्यंतच्या उत्कृष्ट कृषी कृतींचा मागोवा घेणारा एआय सहाय्यक रोडमॅप.',
+  },
+  'myCrop.activeActionNeeded': {
+    en: 'Action Needed Now',
+    hi: 'अभी आवश्यक कार्रवाई',
+    mr: 'आता आवश्यक कृती',
+  },
+  'myCrop.completedStep': {
+    en: 'Completed',
+    hi: 'पूर्ण',
+    mr: 'पूर्ण झाले',
+  },
+  'myCrop.upcomingStep': {
+    en: 'Upcoming',
+    hi: 'आगामी',
+    mr: 'पुढील',
+  },
+  'myCrop.currentStep': {
+    en: 'Current Stage',
+    hi: 'वर्तमान चरण',
+    mr: 'सध्याचा टप्पा',
+  },
+  'myCrop.switchCrop': {
+    en: 'Your Crops:',
+    hi: 'आपकी फसलें:',
+    mr: 'तुमची पिके:',
+  },
+  'myCrop.guidance.step1Title': {
+    en: '1. Soil Preparation & Sowing',
+    hi: '1. मिट्टी की तैयारी और बुवाई',
+    mr: '1. मातीची मशागत आणि पेरणी',
+  },
+  'myCrop.guidance.step1Desc': {
+    en: 'Deep plowing (2-3 passes), leveling, and application of well-rotted FYM (5-10 tons/acre).',
+    hi: 'गहरी जुताई (2-3 बार), समतलीकरण और अच्छी तरह सड़ी हुई गोबर की खाद (5-10 टन/एकड़) डालें।',
+    mr: 'खोल नांगरणी (२-३ वेळा), सपाटीकरण आणि चांगले कुजलेले शेणखत (५-१० टन/एकर) टाका.',
+  },
+  'myCrop.guidance.step1Action': {
+    en: 'Basal fertilizer dose: Apply N:P:K (10:26:26 or DAP) into furrows before seed sowing.',
+    hi: 'बुवाई से पहले पंक्तियों में बेसल उर्वरक (10:26:26 या डीएपी) डालें।',
+    mr: 'पेरणीपूर्वी ओळींमध्ये खताची बेसल मात्रा (१०:२६:२६ किंवा डीएपी) द्या.',
+  },
+  'myCrop.guidance.step2Title': {
+    en: '2. Germination (Days 7-14)',
+    hi: '2. अंकुरण (दिन 7-14)',
+    mr: '2. उगवण (दिवस ७-१४)',
+  },
+  'myCrop.guidance.step2Desc': {
+    en: 'Seeds sprout and establish initial root systems. Uniform emergence requires consistent moisture.',
+    hi: 'बीज अंकुरित होते हैं और प्रारंभिक जड़ें विकसित करते हैं। एकसमान अंकुरण के लिए नमी आवश्यक है।',
+    mr: 'बियाणे अंकुरतात आणि मुळे तयार होतात. एकसमान उगवणीसाठी जमिनीत ओलावा आवश्यक आहे.',
+  },
+  'myCrop.guidance.step2Action': {
+    en: 'Light irrigation to prevent soil crusting. Inspect for damping-off fungus and flea beetle.',
+    hi: 'पपड़ी जमने से रोकने के लिए हल्की सिंचाई करें। डैम्पिंग-ऑफ कवक और कीटों की निगरानी करें।',
+    mr: 'हलके पाणी द्या जेणेकरून माती टणक होणार नाही. बुरशीजन्य रोग आणि कीटकांवर लक्ष ठेवा.',
+  },
+  'myCrop.guidance.step3Title': {
+    en: '3. Vegetative Stage (Fertilizer Needed)',
+    hi: '3. वानस्पतिक वृद्धि (उर्वरक की आवश्यकता)',
+    mr: '3. शाकीय वाढ (खताची गरज)',
+  },
+  'myCrop.guidance.step3Desc': {
+    en: 'Rapid foliage and canopy development. High demand for nitrogen and sulfur.',
+    hi: 'पत्तियों और पौधों का तेजी से विकास। नाइट्रोजन और सल्फर की उच्च आवश्यकता।',
+    mr: 'पाने आणि झाडांची झपाट्याने वाढ. नायट्रोजन व सल्फरची जास्त गरज असते.',
+  },
+  'myCrop.guidance.step3Action': {
+    en: 'First top dressing: Apply Urea (35 kg/acre) + Micronutrient foliar spray. Regular weeding.',
+    hi: 'पहला टॉप ड्रेसिंग: यूरिया (35 किग्रा/एकड़) + सूक्ष्म पोषक तत्वों का छिड़काव। समय पर निराई-गुड़ाई करें।',
+    mr: 'पहिली वरखताची मात्रा: युरिया (३५ किलो/एकर) + सूक्ष्म अन्नद्रव्यांची फवारणी. वेळेवर खुरपणी करा.',
+  },
+  'myCrop.guidance.step4Title': {
+    en: '4. Flowering & Grain / Bulb Filling',
+    hi: '4. फूल आना और दाना / कंद भराव',
+    mr: '4. फुले येणे आणि दाणे / कंद भरणे',
+  },
+  'myCrop.guidance.step4Desc': {
+    en: 'Critical yield-determining stage. Plants allocate starches and nutrients to reproductive parts.',
+    hi: 'उपज निर्धारित करने वाला महत्वपूर्ण चरण। पौधे दानों और फलों में पोषक तत्व संचित करते हैं।',
+    mr: 'उत्पादन निश्चित करणारा अत्यंत महत्त्वाचा टप्पा. झाडे दाण्यांमध्ये आणि कंदात अन्न साठवतात.',
+  },
+  'myCrop.guidance.step4Action': {
+    en: 'Foliar spray of 0:0:50 (Potash) + Boron for size, weight, and disease resistance.',
+    hi: 'आकार, वजन और रोग प्रतिरोधक क्षमता के लिए 0:0:50 (पोटाश) + बोरॉन का पर्णीय छिड़काव करें।',
+    mr: 'उत्तम आकार, वजन आणि चकाकीसाठी ०:०:५० (पोटॅश) + बोरॉनची फवारणी करा.',
+  },
+  'myCrop.guidance.step5Title': {
+    en: '5. Harvesting (Expected Date)',
+    hi: '5. कटाई (अनुमानित तिथि)',
+    mr: '5. काढणी (अपेक्षित तारीख)',
+  },
+  'myCrop.guidance.step5Desc': {
+    en: 'Crop reaches full physiological maturity, leaves yellow/neck tops fall over.',
+    hi: 'फसल पूर्ण परिपक्वता पर पहुंचती है, पत्तियां पीली पड़ जाती हैं।',
+    mr: 'पीक पूर्ण पक्वतेस पोहोचते, पाने पिवळी पडतात आणि काढणीस तयार होते.',
+  },
+  'myCrop.guidance.step5Action': {
+    en: 'Withhold irrigation 10-14 days prior. Harvest on a clear dry day and cure in shade.',
+    hi: 'कटाई से 10-14 दिन पहले सिंचाई रोक दें। धूप वाले सूखे दिन कटाई करें और छाया में सुखाएं।',
+    mr: 'काढणीपूर्वी १०-१४ दिवस पाणी बंद करा. कोरड्या स्वच्छ दिवशी काढणी करा आणि सावलीत सुकवा.',
+  },
 
   // ── Irrigation Screen ─────────────────────────────────────────────────────
 
@@ -1380,6 +1535,201 @@ export const translations: TranslationMap = {
     en: 'Tue',
     hi: 'मंगल',
     mr: 'मंगळ',
+  },
+  'weather.day.wed': {
+    en: 'Wed',
+    hi: 'बुध',
+    mr: 'बुध',
+  },
+  'weather.day.thu': {
+    en: 'Thu',
+    hi: 'गुरु',
+    mr: 'गुरु',
+  },
+  'weather.condition.clear': {
+    en: 'Clear Sky',
+    hi: 'साफ आसमान',
+    mr: 'निरभ्र आकाश',
+  },
+  'weather.condition.mainlyClear': {
+    en: 'Mainly Clear',
+    hi: 'मुख्यतः साफ',
+    mr: 'मुख्यतः निरभ्र',
+  },
+  'weather.condition.partlyCloudy': {
+    en: 'Partly Cloudy',
+    hi: 'आंशिक बादल',
+    mr: 'अंशतः ढगाळ',
+  },
+  'weather.condition.overcast': {
+    en: 'Overcast',
+    hi: 'घने बादल',
+    mr: 'ढगाळ वातावरण',
+  },
+  'weather.condition.fog': {
+    en: 'Fog / Mist',
+    hi: 'कोहरा / धुंध',
+    mr: 'धुके',
+  },
+  'weather.condition.drizzle': {
+    en: 'Light Drizzle',
+    hi: 'हल्की बूंदाबांदी',
+    mr: 'हलक्या सरी',
+  },
+  'weather.condition.rain': {
+    en: 'Moderate Rain',
+    hi: 'मध्यम बारिश',
+    mr: 'मध्यम पाऊस',
+  },
+  'weather.condition.heavyRain': {
+    en: 'Heavy Rain',
+    hi: 'भारी बारिश',
+    mr: 'मुसळधार पाऊस',
+  },
+  'weather.condition.showers': {
+    en: 'Rain Showers',
+    hi: 'बारिश की फुहारें',
+    mr: 'पावसाच्या सरी',
+  },
+  'weather.condition.thunderstorm': {
+    en: 'Thunderstorm',
+    hi: 'गरज के साथ बारिश',
+    mr: 'वादळी पाऊस',
+  },
+  'weather.condition.hail': {
+    en: 'Severe Thunderstorm & Hail',
+    hi: 'ओलावृष्टि के साथ आंधी',
+    mr: 'गारपीट आणि वादळ',
+  },
+  'weather.condition.snow': {
+    en: 'Snowfall',
+    hi: 'बर्फबारी',
+    mr: 'हिमवृष्टी',
+  },
+  'weather.live': {
+    en: 'Live Weather',
+    hi: 'लाइव मौसम',
+    mr: 'थेट हवामान',
+  },
+  'weather.gpsActive': {
+    en: 'GPS Live Location',
+    hi: 'जीपीएस लाइव स्थान',
+    mr: 'जीपीएस थेट स्थान',
+  },
+  'weather.defaultLocation': {
+    en: 'Hyper-Local Forecast',
+    hi: 'अति-स्थानीय पूर्वानुमान',
+    mr: 'हायपर-लोकल अंदाज',
+  },
+  'weather.precipitation': {
+    en: 'Precipitation',
+    hi: 'वर्षा / बारिश',
+    mr: 'पर्जन्यवृष्टी',
+  },
+  'weather.maxTemp': {
+    en: 'Max Temp',
+    hi: 'अधिकतम तापमान',
+    mr: 'कमाल तापमान',
+  },
+  'weather.minTemp': {
+    en: 'Min Temp',
+    hi: 'न्यूनतम तापमान',
+    mr: 'किमान तापमान',
+  },
+  'weather.refresh': {
+    en: 'Refresh Weather',
+    hi: 'मौसम रिफ्रेश करें',
+    mr: 'हवामान रिफ्रेश करा',
+  },
+  'weather.pageTitle': {
+    en: 'Hyper-Local Weather',
+    hi: 'स्थानीय मौसम पूर्वानुमान',
+    mr: 'स्थानिक हवामान अंदाज',
+  },
+  'weather.coordinates': {
+    en: 'Coordinates',
+    hi: 'निर्देशांक',
+    mr: 'स्थान निर्देशांक',
+  },
+  'weather.updating': {
+    en: 'Updating forecast...',
+    hi: 'मौसम अपडेट हो रहा है...',
+    mr: 'हवामान अपडेट होत आहे...',
+  },
+  'weather.expectedRain': {
+    en: 'Rain Expected',
+    hi: 'अपेक्षित वर्षा',
+    mr: 'अपेक्षित पाऊस',
+  },
+  'weather.status.live': {
+    en: 'Live Open-Meteo Feed',
+    hi: 'लाइव ओपन-मेटिओ फीड',
+    mr: 'थेट ओपन-मेटिओ फीड',
+  },
+  'weather.status.demo': {
+    en: 'Cached Demo Data',
+    hi: 'कैश्ड डेमो डेटा',
+    mr: 'कॅश केलेला डेमो डेटा',
+  },
+  'weather.advisory.rainAlertTitle': {
+    en: 'Heavy rain & thunderstorm forecast — protect standing crops',
+    hi: 'भारी बारिश और आंधी की चेतावनी — खड़ी फसलों की सुरक्षा करें',
+    mr: 'मुसळधार पाऊस व वादळाचा इशारा — उभ्या पिकांचे रक्षण करा',
+  },
+  'weather.advisory.rainAlertDesc': {
+    en: 'Substantial precipitation expected over next 48 hours. Excessive moisture may cause root rot or lodging.',
+    hi: 'अगले 48 घंटों में भारी बारिश की संभावना। अत्यधिक नमी से फसल गिर सकती है या जड़ों में सड़न हो सकती है।',
+    mr: 'पुढील ४८ तासांत मोठ्या पावसाची शक्यता. जास्त ओलाव्यामुळे पीक लोळू शकते किंवा मूळकुज होऊ शकते.',
+  },
+  'weather.advisory.rainAlertAction': {
+    en: 'Clean field drainage channels immediately. Postpone all chemical spraying and urea broadcasting until rainfall ceases.',
+    hi: 'खेत की जल निकासी नालियों को तुरंत साफ करें। बारिश रुकने तक कीटनाशक छिड़काव और यूरिया डालना टालें।',
+    mr: 'शेतातील पाण्याचा निचरा होणाऱ्या चारी लगेच साफ करा. पाऊस थांबेपर्यंत औषध फवारणी व युरिया टाकणे पुढे ढकला.',
+  },
+  'weather.advisory.optimalTitle': {
+    en: 'Favorable farming weather window',
+    hi: 'कृषि कार्यों के लिए अनुकूल मौसम',
+    mr: 'शेतीच्या कामांसाठी अनुकूल हवामान',
+  },
+  'weather.advisory.lowRisk': {
+    en: 'Low Risk',
+    hi: 'कम जोखिम',
+    mr: 'कमी धोका',
+  },
+  'weather.advisory.optimalDesc': {
+    en: 'Mild temperatures and stable atmospheric conditions. Optimal window for active farm operations.',
+    hi: 'हल्का तापमान और स्थिर मौसम। खेत के सभी महत्वपूर्ण कार्यों के लिए सर्वोत्तम समय।',
+    mr: 'सौम्य तापमान आणि स्थिर हवामान. शेतीतील सर्व कामांसाठी उत्तम वेळ.',
+  },
+  'weather.advisory.optimalAction': {
+    en: 'Ideal conditions for foliar nutrient sprays, weeding, hoeing, and grain/onion curing.',
+    hi: 'पोषक तत्वों के छिड़काव, निराई-गुड़ाई और फसलों की कटाई/सुखाने के लिए आदर्श स्थिति।',
+    mr: 'विद्राव्य खतांची फवारणी, खुरपणी, कोळपणी आणि कांदा/धान्य वाळवण्यासाठी उत्तम स्थिती.',
+  },
+  'weather.day.day3': {
+    en: 'Day 3',
+    hi: 'तीसरा दिन',
+    mr: 'तिसरा दिवस',
+  },
+  'weather.day.day4': {
+    en: 'Day 4',
+    hi: 'चौथा दिन',
+    mr: 'चौथा दिवस',
+  },
+  'weather.day.day5': {
+    en: 'Day 5',
+    hi: 'पांचवां दिन',
+    mr: 'पाचवा दिवस',
+  },
+  'weather.day.day6': {
+    en: 'Day 6',
+    hi: 'छठा दिन',
+    mr: 'सहावा दिवस',
+  },
+  'weather.day.day7': {
+    en: 'Day 7',
+    hi: 'सातवां दिन',
+    mr: 'सातवा दिवस',
   },
 
   // ── Resources Screen ──────────────────────────────────────────────────────

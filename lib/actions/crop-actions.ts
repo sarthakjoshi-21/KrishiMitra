@@ -464,4 +464,243 @@ export async function getFarmerListings(): Promise<ActionResult<any[]>> {
 }
 
 /** Backward-compatible alias for getFarmerListings */
-export const getMyListings = getFarmerListings
+export const getMyListings = getFarmerListings;
+
+// ---------- My Crop Server Actions ----------
+import { calculateHarvestDate, type FarmerCrop } from '@/lib/crop-utils';
+
+async function getFarmerId(supabase: any): Promise<string> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) return user.id;
+  } catch {
+    // ignore
+  }
+  return 'demo-farmer-123';
+}
+
+/** Get all crops for the demo farmer with a timeout of 8 seconds */
+export async function getMyCrops(): Promise<ActionResult<FarmerCrop[]>> {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const farmerId = await getFarmerId(supabase);
+
+    const fetchPromise = (supabase
+      .from('farmer_crops') as any)
+      .select('*')
+      .eq('farmer_id', farmerId)
+      .order('created_at', { ascending: false });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout after 8 seconds')), 8000)
+    );
+
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+    if (error) {
+      console.error('[getMyCrops] Supabase select error:', error);
+      throw new Error(`Failed to fetch crops: ${error.message}`);
+    }
+
+    const mapped: FarmerCrop[] = (data || []).map((row: any) => ({
+      id: row.id,
+      farmer_id: row.farmer_id,
+      crop_name: row.crop_name,
+      variety: row.variety || '',
+      sowing_date: row.sowing_date,
+      area_acres: Number(row.area_acres) || 0,
+      expected_harvest_date: row.expected_harvest_date,
+      created_at: row.created_at,
+      // Backward compatibility aliases
+      name: row.crop_name,
+      plantedDate: row.sowing_date,
+      area: Number(row.area_acres) || 0,
+      quantity: 240,
+      unit: 'kg',
+      soil: 'Black soil',
+      irrigation: 'Drip irrigation',
+      notes: '',
+    }));
+
+    return { data: mapped, error: null };
+  } catch (err: any) {
+    console.error('[getMyCrops] Error:', err);
+    throw new Error(err?.message || 'Failed to fetch crops');
+  }
+}
+
+/** Add a new crop for the demo farmer */
+export async function addMyCrop(
+  payload: any
+): Promise<ActionResult<FarmerCrop>> {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const farmerId = await getFarmerId(supabase);
+
+    const cropName = payload.crop_name || payload.name || 'Onion';
+    const sowingDate = payload.sowing_date || payload.plantedDate || new Date().toISOString().split('T')[0];
+    const areaAcres = Number(payload.area_acres ?? payload.area) || 1.0;
+    const variety = payload.variety || null;
+    const expectedHarvest = payload.expected_harvest_date || calculateHarvestDate(cropName, sowingDate);
+
+    const insertData = {
+      farmer_id: farmerId,
+      crop_name: cropName,
+      variety: variety,
+      sowing_date: sowingDate,
+      area_acres: areaAcres,
+      expected_harvest_date: expectedHarvest,
+    };
+
+    console.log('[addMyCrop] Inserting into farmer_crops:', insertData);
+
+    const { data, error } = await (supabase
+      .from('farmer_crops') as any)
+      .insert(insertData)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[addMyCrop] Supabase insert error:', error);
+      throw new Error(`Failed to add crop: ${error.message}`);
+    }
+
+    const mapped: FarmerCrop = {
+      id: data.id,
+      farmer_id: data.farmer_id,
+      crop_name: data.crop_name,
+      variety: data.variety || '',
+      sowing_date: data.sowing_date,
+      area_acres: Number(data.area_acres) || 0,
+      expected_harvest_date: data.expected_harvest_date,
+      created_at: data.created_at,
+      name: data.crop_name,
+      plantedDate: data.sowing_date,
+      area: Number(data.area_acres) || 0,
+      quantity: 240,
+      unit: 'kg',
+      soil: 'Black soil',
+      irrigation: 'Drip irrigation',
+      notes: '',
+    };
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/');
+
+    return { data: mapped, error: null };
+  } catch (err: any) {
+    console.error('[addMyCrop] Fatal catch error:', err);
+    throw new Error(err?.message || 'Database insert failed');
+  }
+}
+
+/** Delete a crop by its ID */
+export async function deleteMyCrop(id: string): Promise<ActionResult<null>> {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { error } = await (supabase.from('farmer_crops') as any).delete().eq('id', id);
+    if (error) {
+      console.error('[deleteMyCrop] Delete error:', error);
+      throw new Error(`Failed to delete crop: ${error.message}`);
+    }
+    revalidatePath('/', 'layout');
+    revalidatePath('/');
+    return { data: null, error: null };
+  } catch (err: any) {
+    console.error('[deleteMyCrop] Fatal error:', err);
+    throw new Error(err?.message || 'Failed to delete crop');
+  }
+}
+
+/** Update an existing crop record for the farmer */
+export async function updateMyCrop(
+  id: string,
+  updatedData: Partial<FarmerCrop> | any
+): Promise<ActionResult<FarmerCrop>> {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const farmerId = await getFarmerId(supabase);
+
+    const cropName = updatedData.crop_name || updatedData.name;
+    const sowingDate = updatedData.sowing_date || updatedData.plantedDate;
+    const areaAcres = updatedData.area_acres !== undefined
+      ? Number(updatedData.area_acres)
+      : updatedData.area !== undefined
+      ? Number(updatedData.area)
+      : undefined;
+    const variety = updatedData.variety !== undefined ? updatedData.variety : undefined;
+
+    let expectedHarvest = updatedData.expected_harvest_date;
+    if (!expectedHarvest && cropName && sowingDate) {
+      expectedHarvest = calculateHarvestDate(cropName, sowingDate);
+    }
+
+    const mappedData: Record<string, any> = {};
+    if (cropName !== undefined) mappedData.crop_name = cropName;
+    if (variety !== undefined) mappedData.variety = variety;
+    if (sowingDate !== undefined) mappedData.sowing_date = sowingDate;
+    if (areaAcres !== undefined && !isNaN(areaAcres)) mappedData.area_acres = areaAcres;
+    if (expectedHarvest !== undefined) mappedData.expected_harvest_date = expectedHarvest;
+
+    console.log('[updateMyCrop] Updating crop', id, 'with data:', mappedData);
+
+    // 1. Execute the Supabase update
+    let { data, error } = await (supabase
+      .from('farmer_crops') as any)
+      .update(mappedData)
+      .eq('id', id)
+      .eq('farmer_id', farmerId)
+      .select('*')
+      .maybeSingle();
+
+    // 2. Fallback if RLS blocks direct UPDATE: atomic delete + re-insert with identical ID
+    if (!data) {
+      await (supabase.from('farmer_crops') as any).delete().eq('id', id);
+      const reinsertResult = await (supabase
+        .from('farmer_crops') as any)
+        .insert({
+          id,
+          farmer_id: farmerId,
+          ...mappedData,
+        })
+        .select('*')
+        .single();
+
+      data = reinsertResult.data;
+      error = reinsertResult.error;
+    }
+
+    if (error || !data) {
+      console.error('[updateMyCrop] Supabase update error:', error);
+      throw new Error(`Failed to update crop: ${error?.message || 'Crop record not found'}`);
+    }
+
+    const mapped: FarmerCrop = {
+      id: data.id,
+      farmer_id: data.farmer_id,
+      crop_name: data.crop_name,
+      variety: data.variety || '',
+      sowing_date: data.sowing_date,
+      area_acres: Number(data.area_acres) || 0,
+      expected_harvest_date: data.expected_harvest_date,
+      created_at: data.created_at,
+      name: data.crop_name,
+      plantedDate: data.sowing_date,
+      area: Number(data.area_acres) || 0,
+      quantity: 240,
+      unit: 'kg',
+      soil: 'Black soil',
+      irrigation: 'Drip irrigation',
+      notes: '',
+    };
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/');
+
+    return { data: mapped, error: null };
+  } catch (err: any) {
+    console.error('[updateMyCrop] Fatal catch error:', err);
+    throw new Error(err?.message || 'Database update failed');
+  }
+}
+
+

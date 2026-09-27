@@ -124,6 +124,13 @@ function FarmerDashboard({ userName, onLogout }: { userName: string; onLogout: (
   const router = useRouter()
   const { language } = useLanguage()
   const [tab, setTab] = useState('Overview')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('tab')
+      if (p) setTab(p)
+    }
+  }, [])
   const [hasNotification, setHasNotification] = useState(false)
   const [notificationPopped, setNotificationPopped] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
@@ -641,8 +648,6 @@ export default function KrishiMitraApp() {
       if (roleParam === 'farmer' || roleParam === 'buyer') {
         setRole(roleParam)
         if (nameParam) setUserName(nameParam)
-        window.history.replaceState({}, '', window.location.pathname)
-        return
       }
     }
 

@@ -77,18 +77,39 @@ export default function LoginScreen({ onEnter }: Props) {
               {t('login.loginAs', language)}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link
-                href="/farmer-login"
-                className="action-button flex items-center justify-center gap-2 hover:shadow-lg transition-all"
-              >
-                <Sprout className="size-5" /> {t('login.farmer', language)} <ArrowRight className="ml-auto size-4" />
-              </Link>
-              <Link
-                href="/buyer-login"
-                className="action-button outline flex items-center justify-center gap-2 hover:shadow-lg transition-all"
-              >
-                <Package className="size-5" /> {t('login.buyer', language)} <ArrowRight className="ml-auto size-4" />
-              </Link>
+              {onEnter ? (
+                <button
+                  type="button"
+                  onClick={() => onEnter('farmer', 'Ramesh Patil')}
+                  className="action-button flex items-center justify-center gap-2 hover:shadow-lg transition-all cursor-pointer"
+                >
+                  <Sprout className="size-5" /> {t('login.farmer', language)} <ArrowRight className="ml-auto size-4" />
+                </button>
+              ) : (
+                <Link
+                  href="/farmer-login"
+                  className="action-button flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                >
+                  <Sprout className="size-5" /> {t('login.farmer', language)} <ArrowRight className="ml-auto size-4" />
+                </Link>
+              )}
+
+              {onEnter ? (
+                <button
+                  type="button"
+                  onClick={() => onEnter('buyer', 'Priya Sharma')}
+                  className="action-button outline flex items-center justify-center gap-2 hover:shadow-lg transition-all cursor-pointer"
+                >
+                  <Package className="size-5" /> {t('login.buyer', language)} <ArrowRight className="ml-auto size-4" />
+                </button>
+              ) : (
+                <Link
+                  href="/buyer-login"
+                  className="action-button outline flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                >
+                  <Package className="size-5" /> {t('login.buyer', language)} <ArrowRight className="ml-auto size-4" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -201,6 +201,14 @@ export default function FarmerLoginPage() {
             )}
           </button>
 
+          <button
+            type="button"
+            onClick={() => router.push('/?role=farmer&name=Ramesh%20Patil')}
+            className="w-full text-center text-xs font-bold text-primary hover:underline py-2.5 px-4 border border-primary/20 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
+          >
+            🚀 1-Click Presentation Demo (Ramesh Patil)
+          </button>
+
           <p className="text-center text-xs leading-5 text-muted-foreground">
             {t('auth.credentialsSecure', language)}
           </p>
