@@ -1443,6 +1443,161 @@ export const translations: TranslationMap = {
     hi: 'प्रणाली ज़ोन सीमाओं के आधार पर ड्रिप वाल्व को स्वचालित रूप से सक्रिय करती है। किसान बदल सकता है।',
     mr: 'प्रणाली झोन मर्यादेनुसार ड्रिप व्हॉल्व्ह आपोआप सुरू करते. शेतकरी बदल करू शकतो.',
   },
+  'irrigation.smartTitle': {
+    en: 'Smart IoT Irrigation Advisory',
+    hi: 'स्मार्ट आईओटी सिंचाई सलाह',
+    mr: 'स्मार्ट आयओटी सिंचन सल्ला',
+  },
+  'irrigation.smartSubtitle': {
+    en: 'Crop-tailored irrigation intelligence combining farm records with live Open-Meteo weather data.',
+    hi: 'फसल-विशिष्ट सिंचाई बुद्धिमत्ता — खेत के रिकॉर्ड और लाइव ओपन-मेटिओ मौसम डेटा का संयोजन।',
+    mr: 'पीक-विशिष्ट सिंचन बुद्धिमत्ता — शेतीतील नोंदी आणि थेट ओपन-मेटिओ हवामान डेटाचे एकत्रीकरण.',
+  },
+  'irrigation.advisory.rain': {
+    en: 'Rain expected. Pause irrigation to save water and prevent waterlogging.',
+    hi: 'बारिश की संभावना है। पानी बचाने और जलभराव रोकने के लिए सिंचाई रोकें।',
+    mr: 'पावसाची शक्यता आहे. पाणी वाचवण्यासाठी आणि दलदल टाळण्यासाठी पाणी देणे थांबवा.',
+  },
+  'irrigation.advisory.heat': {
+    en: 'High heat alert. Apply deep irrigation (e.g., 20 liters/acre) immediately to prevent crop stress.',
+    hi: 'अत्यधिक गर्मी की चेतावनी। फसल के तनाव को रोकने के लिए तुरंत गहरी सिंचाई (उदा. 20 लीटर/एकड़) करें।',
+    mr: 'तीव्र उष्णतेचा इशारा. पिकावरील ताण टाळण्यासाठी त्वरित खोल सिंचन (उदा. 20 लिटर/एकर) करा.',
+  },
+  'irrigation.advisory.normal': {
+    en: 'Optimal conditions. Maintain standard drip irrigation schedule.',
+    hi: 'अनुकूल स्थिति। मानक ड्रिप सिंचाई अनुसूची बनाए रखें।',
+    mr: 'उत्तम परिस्थिती. नियमित ठिबक सिंचन वेळापत्रक सुरू ठेवा.',
+  },
+  'irrigation.status.pause': {
+    en: 'Pause Irrigation',
+    hi: 'सिंचाई रोकें',
+    mr: 'सिंचन थांबवा',
+  },
+  'irrigation.status.critical': {
+    en: 'Critical Heat Alert',
+    hi: 'गंभीर गर्मी चेतावनी',
+    mr: 'गंभीर उष्णता इशारा',
+  },
+  'irrigation.status.normal': {
+    en: 'Optimal Schedule',
+    hi: 'अनुकूल अनुसूची',
+    mr: 'नियमित वेळापत्रक',
+  },
+  'irrigation.action.pause': {
+    en: 'Hold all irrigation cycles for the next 24-48 hours. Inspect field drainage ditches to prevent standing pools.',
+    hi: 'अगले 24-48 घंटों के लिए सभी सिंचाई चक्र रोकें। जलभराव रोकने के लिए खेत की नालियों का निरीक्षण करें।',
+    mr: 'पुढील २४-४८ तासांसाठी पाणी देणे थांबवा. पाणी साचू नये म्हणून शेतातील चारी तपासा.',
+  },
+  'irrigation.action.heat': {
+    en: 'Schedule deep watering during low-evaporative windows (6:00 AM – 8:30 AM or after sunset). Apply mulch if feasible.',
+    hi: 'कम वाष्पीकरण वाले समय (सुबह 6:00 - 8:30 या सूर्यास्त के बाद) गहरी सिंचाई करें। संभव हो तो मल्च लगाएं।',
+    mr: 'कमी बाष्पीभवनाच्या वेळेत (सकाळी ६:०० ते ८:३० किंवा सूर्यास्तानंतर) खोल पाणी द्या. शक्य असल्यास आच्छादन करा.',
+  },
+  'irrigation.action.normal': {
+    en: 'Operate standard drip cycle (45-60 minutes). Check emitter nozzles for uniform flow.',
+    hi: 'मानक ड्रिप चक्र (45-60 मिनट) चलाएं। समान प्रवाह के लिए नोजल की जांच करें।',
+    mr: 'नियमित ठिबक चक्र (४५-६० मिनिटे) चालवा. समान प्रवाहासाठी तोट्या तपासा.',
+  },
+  'irrigation.noCropsTitle': {
+    en: 'No Active Crops Found',
+    hi: 'कोई सक्रिय फसल नहीं मिली',
+    mr: 'कोणतेही सक्रिय पीक आढळले नाही',
+  },
+  'irrigation.noCropsDesc': {
+    en: "Please add a crop in the 'My Crop' tab to get smart irrigation advisories.",
+    hi: 'स्मार्ट सिंचाई सलाह प्राप्त करने के लिए कृपया "मेरी फसल" टैब में एक फसल जोड़ें।',
+    mr: 'स्मार्ट सिंचन सल्ला मिळवण्यासाठी कृपया "माझे पीक" टॅबमध्ये पीक जोडा.',
+  },
+  'irrigation.goToMyCrop': {
+    en: 'Go to My Crop',
+    hi: 'मेरी फसल पर जाएं',
+    mr: 'माझ्या पिकाकडे जा',
+  },
+  'irrigation.weatherLinked': {
+    en: 'Open-Meteo Weather Feed Synced',
+    hi: 'ओपन-मेटिओ मौसम फीड सिंक है',
+    mr: 'ओपन-मेटिओ हवामान फीड जोडले आहे',
+  },
+  'irrigation.waterRecommendation': {
+    en: 'Recommended Volume',
+    hi: 'अनुशंसित पानी की मात्रा',
+    mr: 'शिफारस केलेले पाणी',
+  },
+  'irrigation.totalLiters': {
+    en: 'Total Estimated Requirement',
+    hi: 'कुल अनुमानित आवश्यकता',
+    mr: 'एकूण अंदाजे आवश्यकता',
+  },
+  'irrigation.irrigationWindow': {
+    en: 'Best Timing Window',
+    hi: 'सिंचाई का सर्वोत्तम समय',
+    mr: 'सिंचनाची सर्वोत्तम वेळ',
+  },
+  'irrigation.irrigationWindowDesc': {
+    en: 'Early morning (6:00 AM – 8:30 AM) minimizes evaporation by up to 35%.',
+    hi: 'सुबह जल्दी (6:00 - 8:30) सिंचाई करने से वाष्पीकरण में 35% तक कमी आती है।',
+    mr: 'सकाळी लवकर (६:०० ते ८:३०) पाणी दिल्याने बाष्पीभवन ३५% पर्यंत कमी होते.',
+  },
+  'irrigation.valveAction': {
+    en: 'Trigger Drip Valve',
+    hi: 'ड्रिप वाल्व चालू करें',
+    mr: 'ठिबक व्हॉल्व्ह सुरू करा',
+  },
+  'irrigation.valveActive': {
+    en: 'Drip Valve Active',
+    hi: 'ड्रिप वाल्व सक्रिय',
+    mr: 'ठिबक व्हॉल्व्ह सुरू आहे',
+  },
+  'irrigation.valveSuccess': {
+    en: 'Drip cycle initiated for this plot!',
+    hi: 'इस खेत के लिए ड्रिप चक्र शुरू किया गया!',
+    mr: 'या क्षेत्रासाठी ठिबक चक्र सुरू करण्यात आले!',
+  },
+  'irrigation.activeCrops': {
+    en: 'Active Monitored Crops',
+    hi: 'सक्रिय निगरानी वाली फसलें',
+    mr: 'सक्रिय देखरेख असलेली पिके',
+  },
+  'irrigation.cropTip.onion': {
+    en: 'Onion bulbs are shallow-rooted. Maintain even topsoil moisture and stop irrigation 10-15 days prior to harvest.',
+    hi: 'प्याज की जड़ें उथली होती हैं। मिट्टी की ऊपरी सतह में समान नमी रखें और कटाई से 10-15 दिन पहले सिंचाई बंद कर दें।',
+    mr: 'कांद्याची मुळे उथळ असतात. वरच्या मातीत समतोल ओलावा ठेवा आणि काढणीपूर्वी १०-१५ दिवस पाणी देणे बंद करा.',
+  },
+  'irrigation.cropTip.wheat': {
+    en: 'Wheat is highly sensitive at Crown Root Initiation (CRI) and flowering stages. Avoid irrigation during high winds to prevent lodging.',
+    hi: 'गेहूं सीआरआई (मुकुट जड़ निर्माण) और फूल आने के समय अत्यधिक संवेदनशील होता है। फसल गिरने से बचाने के लिए तेज हवाओं में सिंचाई न करें।',
+    mr: 'गहू मुकुट मूळ फुटताना आणि फुलोऱ्याच्या अवस्थेत अत्यंत संवेदनशील असतो. पीक लोळू नये म्हणून सोसाट्याच्या वाऱ्यात पाणी देणे टाळा.',
+  },
+  'irrigation.cropTip.tomato': {
+    en: 'Tomatoes require consistent drip moisture. Erratic watering causes blossom-end rot and fruit cracking.',
+    hi: 'टमाटर को निरंतर ड्रिप नमी की आवश्यकता होती है। अनियमित पानी देने से फल फटने और सड़ने की समस्या होती है।',
+    mr: 'टोमॅटोला नियमित ठिबक ओलावा आवश्यक असतो. अनियमित पाण्यामुळे फळे तडकतात किंवा खराब होतात.',
+  },
+  'irrigation.cropTip.rice': {
+    en: 'Maintain shallow submergence (2-5 cm) during active tillering. Drain field 7-10 days before harvest.',
+    hi: 'कल्ले फूटने के दौरान 2-5 सेमी उथला पानी बनाए रखें। कटाई से 7-10 दिन पहले खेत से पानी निकाल दें।',
+    mr: 'फुटवे येण्याच्या काळात २-५ सेमी उथळ पाणी ठेवा. काढणीपूर्वी ७-१० दिवस शेतातील पाणी काढून टाका.',
+  },
+  'irrigation.cropTip.cotton': {
+    en: 'Cotton has deep taproots. Ensure deep percolation during boll formation, but avoid vegetative waterlogging.',
+    hi: 'कपास में गहरी मूसला जड़ें होती हैं। गूलर बनने के दौरान गहरी नमी सुनिश्चित करें, पर जलभराव से बचें।',
+    mr: 'कापसाची सोटमुळे खोल जातात. बोंडे भरण्याच्या काळात खोल पाणी द्या, पण पाणी साचू देऊ नका.',
+  },
+  'irrigation.cropTip.soybean': {
+    en: 'Pod development and seed filling are critical moisture windows. Water stress causes pod abortion.',
+    hi: 'फली विकास और दाना भरने का समय नमी के लिए अत्यंत महत्वपूर्ण है। पानी की कमी से फलियां झड़ सकती हैं।' ,
+    mr: 'शेंगा भरणे आणि दाणा भरणे हा पाण्यासाठी अत्यंत महत्त्वाचा टप्पा आहे. पाण्याचा ताण पडल्यास शेंगा गळतात.',
+  },
+  'irrigation.cropTip.sugarcane': {
+    en: 'Grand growth phase requires regular furrow/drip irrigation every 7-10 days depending on soil type.',
+    hi: 'तीव्र विकास के दौरान मिट्टी के प्रकार के आधार पर हर 7-10 दिनों में नियमित सिंचाई की आवश्यकता होती है।',
+    mr: 'मोठ्या वाढीच्या काळात मातीच्या प्रकारानुसार दर ७-१० दिवसांनी नियमित सिंचन आवश्यक असते.',
+  },
+  'irrigation.cropTip.default': {
+    en: 'Ensure root-zone aeration between drip cycles to prevent fungal root diseases.',
+    hi: 'फफूंद जनित रोगों से बचने के लिए ड्रिप चक्रों के बीच जड़ों में हवा का संचार सुनिश्चित करें।',
+    mr: 'बुरशीजन्य रोग टाळण्यासाठी दोन ठिबक चक्रांच्या दरम्यान मुळांना हवा खेळती राहील याची काळजी घ्या.',
+  },
 
   // ── Weather Screen ────────────────────────────────────────────────────────
 
@@ -2481,9 +2636,224 @@ export const translations: TranslationMap = {
   // ── Crop Health Screen ────────────────────────────────────────────────────
 
   'cropHealth.title': {
-    en: 'Crop Health',
-    hi: 'फसल स्वास्थ्य',
-    mr: 'पीक आरोग्य',
+    en: 'Crop Health & AI Scanner',
+    hi: 'फसल स्वास्थ्य एवं एआई स्कैनर',
+    mr: 'पीक आरोग्य व एआय स्कॅनर',
+  },
+  'cropHealth.aiScanner': {
+    en: 'AI Leaf Disease Scanner',
+    hi: 'एआई पत्ती रोग स्कैनर',
+    mr: 'एआय पान रोग स्कॅनर',
+  },
+  'cropHealth.aiSubtitle': {
+    en: 'Simulated computer-vision diagnosis detecting foliar blights, rusts, and fungal infections with certified treatments.',
+    hi: 'पत्तियों के रोगों का त्वरित एआई कंप्यूटर विजन विश्लेषण और प्रमाणित जैविक व रासायनिक उपचार।',
+    mr: 'पानावरील रोगांचे त्वरित एआय कॉम्प्युटर व्हिजन विश्लेषण आणि प्रमाणित सेंद्रिय व रासायनिक उपचार.',
+  },
+  'cropHealth.dropzoneLabel': {
+    en: 'Tap to capture or upload leaf photo',
+    hi: 'पत्ती का फोटो खींचें या अपलोड करने के लिए टैप करें',
+    mr: 'पानाचा फोटो काढण्यासाठी किंवा अपलोड करण्यासाठी येथे टॅप करा',
+  },
+  'cropHealth.dropzoneSub': {
+    en: 'Supports camera capture, high-res leaf scans, or pick a sample leaf below',
+    hi: 'मोबाइल कैमरा, उच्च गुणवत्ता वाले लीफ स्कैन समर्थित, या नीचे दिए गए नमूने चुनें',
+    mr: 'कॅमेरा फोटो, उच्च दर्जाचे लीफ स्कॅन समर्थित, किंवा खालील नमुना निवडा',
+  },
+  'cropHealth.choosePreset': {
+    en: 'Or choose a field specimen to test:',
+    hi: 'या परीक्षण के लिए एक खेत का नमूना चुनें:',
+    mr: 'किंवा चाचणीसाठी प्रत्यक्ष शेतातील नमुना निवडा:',
+  },
+  'cropHealth.scanningTitle': {
+    en: 'AI Model analyzing leaf patterns...',
+    hi: 'एआई मॉडल पत्ती के पैटर्न का विश्लेषण कर रहा है...',
+    mr: 'एआय मॉडेल पानावरील लक्षणांचे विश्लेषण करत आहे...',
+  },
+  'cropHealth.scanningSub': {
+    en: 'Extracting lesion pigmentation, cellular chlorosis gradients, and fungal sporulation signatures...',
+    hi: 'घाव के रंग, सेल्युलर क्लोरोसिस और फंगल लक्षणों का सूक्ष्म विश्लेषण किया जा रहा है...',
+    mr: 'डागांचा रंग, पेशींमधील पिवळेपणा आणि बुरशीजन्य लक्षणांचे सूक्ष्म विश्लेषण सुरू आहे...',
+  },
+  'cropHealth.matchingVectors': {
+    en: 'Matching against 45,000+ certified agricultural pathology vectors...',
+    hi: '45,000+ प्रमाणित कृषि विकृति विज्ञान डेटाबेस से मिलान किया जा रहा है...',
+    mr: '४५,०००+ प्रमाणित कृषी रोग डेटाबेसशी तुलना केली जात आहे...',
+  },
+  'cropHealth.diagnosisResult': {
+    en: 'Pathology Diagnosis Result',
+    hi: 'रोग निदान परिणाम',
+    mr: 'रोग निदान निष्कर्ष',
+  },
+  'cropHealth.confidence': {
+    en: 'Confidence Score',
+    hi: 'सटीकता स्कोर',
+    mr: 'अचूकता गुण',
+  },
+  'cropHealth.severity': {
+    en: 'Severity Level',
+    hi: 'गंभीरता स्तर',
+    mr: 'तीव्रता स्तर',
+  },
+  'cropHealth.severity.low': {
+    en: 'Low / Negligible',
+    hi: 'कम / नगण्य',
+    mr: 'कमी / नगण्य',
+  },
+  'cropHealth.severity.moderate': {
+    en: 'Moderate (Action Advised)',
+    hi: 'मध्यम (कार्रवाई आवश्यक)',
+    mr: 'मध्यम (उपाययोजना आवश्यक)',
+  },
+  'cropHealth.severity.high': {
+    en: 'High / Critical',
+    hi: 'उच्च / गंभीर',
+    mr: 'तीव्र / गंभीर',
+  },
+  'cropHealth.symptomsTitle': {
+    en: 'Observed Pathological Symptoms',
+    hi: 'देखे गए रोग लक्षण',
+    mr: 'दिसून आलेली रोग लक्षणे',
+  },
+  'cropHealth.treatmentProtocol': {
+    en: 'Dual Treatment Protocols',
+    hi: 'दोहरी उपचार प्रणाली',
+    mr: 'दुहेरी उपचार पद्धती',
+  },
+  'cropHealth.organicTreatment': {
+    en: 'Organic / Bio-Control Protocol',
+    hi: 'जैविक / जैविक-नियंत्रण प्रोटोकॉल',
+    mr: 'सेंद्रिय / जैविक-नियंत्रण पद्धती',
+  },
+  'cropHealth.chemicalTreatment': {
+    en: 'Chemical / Fungicide Protocol',
+    hi: 'रासायनिक / कवकनाशी प्रोटोकॉल',
+    mr: 'रासायनिक / बुरशीनाशक पद्धती',
+  },
+  'cropHealth.phiTitle': {
+    en: 'Pre-Harvest Interval (PHI) Safety Warning',
+    hi: 'कटाई पूर्व अंतराल (PHI) सुरक्षा चेतावनी',
+    mr: 'काढणीपूर्व कालावधी (PHI) सुरक्षा इशारा',
+  },
+  'cropHealth.safetyGuidance': {
+    en: 'Safe Application Guidelines',
+    hi: 'सुरक्षित छिड़काव दिशा-निर्देश',
+    mr: 'सुरक्षित फवारणी मार्गदर्शक तत्त्वे',
+  },
+  'cropHealth.resetScan': {
+    en: 'Reset / Scan Another Leaf',
+    hi: 'रीसेट करें / दूसरी पत्ती स्कैन करें',
+    mr: 'रीसेट करा / दुसरे पान स्कॅन करा',
+  },
+  'cropHealth.phiBadge': {
+    en: 'PHI Safety Protocol',
+    hi: 'PHI सुरक्षा प्रोटोकॉल',
+    mr: 'PHI सुरक्षा नियम',
+  },
+  'cropHealth.earlyBlight.name': {
+    en: 'Early Blight (Alternaria solani)',
+    hi: 'अगेती झुलसा (अल्टर्नारिया सोलानी)',
+    mr: 'लवकर येणारा करपा (अल्टर्नारिया सोलानी)',
+  },
+  'cropHealth.earlyBlight.crop': {
+    en: 'Tomato / Potato / Eggplant',
+    hi: 'टमाटर / आलू / बैंगन',
+    mr: 'टोमॅटो / बटाटा / वांगी',
+  },
+  'cropHealth.earlyBlight.symptoms': {
+    en: 'Concentric dark brown rings ("target-board" spots) on mature lower leaves surrounded by yellow chlorotic halos.',
+    hi: 'निचली पत्तियों पर गोल भूरे छल्ले (टारगेट-बोर्ड जैसे धब्बे) और पत्तियों के किनारों पर पीलापन।',
+    mr: 'खालच्या जुन्या पानांवर गोलाकार तपकिरी डाग (टार्गेट-बोर्डसारखे) आणि पिवळे वलय.',
+  },
+  'cropHealth.earlyBlight.organic': {
+    en: 'Neem oil spray (3–5 ml/L water) or Trichoderma viride foliar wash. Prune and destroy infected lower foliage.',
+    hi: 'नीम का तेल (3-5 मिली/लीटर पानी) या ट्राइकोडर्मा विरिडी का छिड़काव। संक्रमित निचली पत्तियों को तोड़कर नष्ट करें।',
+    mr: 'कडुनिंब तेल (३-५ मिली/लिटर पाणी) किंवा ट्रायकोडर्मा विरिडी फवारणी. बाधित खालची पाने तोडून नष्ट करा.',
+  },
+  'cropHealth.earlyBlight.chemical': {
+    en: 'Mancozeb 75% WP (2 g/L) or Copper Oxychloride 50% WP (2.5 g/L). Alternate fungicides to prevent resistance.',
+    hi: 'मैंकोजेब 75% डब्ल्यूपी (2 ग्राम/लीटर) या कॉपर ऑक्सीक्लोराइड 50% डब्ल्यूपी (2.5 ग्राम/लीटर)। प्रतिरोध से बचने के लिए दवा बदलें।',
+    mr: 'मॅन्कोझेब ७५% डब्ल्यूपी (२ ग्रॅम/लिटर) किंवा कॉपर ऑक्सिक्लोराईड ५०% डब्ल्यूपी (२.५ ग्रॅम/लिटर). औषध बदलून फवारा.',
+  },
+  'cropHealth.earlyBlight.phiWarning': {
+    en: 'Do not harvest crops for 7 days after spraying to ensure zero chemical residues on produce.',
+    hi: 'फसल पर रासायनिक अवशेष न रहें, इसके लिए छिड़काव के बाद 7 दिनों तक कटाई न करें।',
+    mr: 'उत्पादनावर कोणतेही रासायनिक अंश राहू नयेत म्हणून फवारणीनंतर ७ दिवस पिकाची काढणी करू नका.',
+  },
+  'cropHealth.earlyBlight.safetyNotes': {
+    en: 'Wear protective goggles and mask during spraying. Spray in early morning or late evening when wind speed is below 10 km/h.',
+    hi: 'छिड़काव के समय चश्मा और मास्क पहनें। सुबह जल्दी या शाम को जब हवा की गति 10 किमी/घंटा से कम हो तभी छिड़काव करें।',
+    mr: 'फवारणी करताना चष्मा आणि मास्क वापरा. सकाळी किंवा संध्याकाळी वाऱ्याचा वेग १० किमी/तासापेक्षा कमी असतानाच फवारणी करा.',
+  },
+  'cropHealth.powderyMildew.name': {
+    en: 'Powdery Mildew (Erysiphe cichoracearum)',
+    hi: 'चूर्णिल आसिता / छाछिया',
+    mr: 'भुरी रोग (पावडरी मिल्ड्यू)',
+  },
+  'cropHealth.powderyMildew.crop': {
+    en: 'Grapes / Cucumber / Pea / Melons',
+    hi: 'अंगूर / खीरा / मटर / तरबूज',
+    mr: 'द्राक्षे / काकडी / वाटाणा / कलिंगड',
+  },
+  'cropHealth.powderyMildew.symptoms': {
+    en: 'White talcum-like powdery fungal patches on upper leaf surfaces causing leaf distortion, chlorosis, and premature leaf drop.',
+    hi: 'पत्तियों की ऊपरी सतह पर सफेद पाउडर जैसे धब्बे, जिससे पत्तियां मुड़ती हैं, पीली होती हैं और समय से पहले गिर जाती हैं।',
+    mr: 'पानांच्या वरच्या भागावर पांढऱ्या पावडरसारखे डाग, ज्यामुळे पाने वाकडी होतात, पिवळी पडतात आणि गळून पडतात.',
+  },
+  'cropHealth.powderyMildew.organic': {
+    en: 'Potassium bicarbonate spray (3 g/L) or diluted milk-water wash (1:9 ratio). Improve plant canopy for direct sunlight.',
+    hi: 'पोटेशियम बाइकार्बोनेट (3 ग्राम/लीटर) या दूध-पानी का घोल (1:9 अनुपात)। धूप पहुंचने के लिए पौधों में छंटाई करें।',
+    mr: 'पोटॅशियम बायकार्बोनेट (३ ग्रॅम/लिटर) किंवा दूध-पाण्याचे मिश्रण (१:९). झाडांवर थेट सूर्यप्रकाश पडेल अशी छाटणी करा.',
+  },
+  'cropHealth.powderyMildew.chemical': {
+    en: 'Wettable Sulfur 80% WP (2.5 g/L) or Hexaconazole 5% EC (1 ml/L). Avoid sulfur when ambient temperatures exceed 32°C.',
+    hi: 'घुलनशील सल्फर 80% डब्ल्यूपी (2.5 ग्राम/लीटर) या हेक्साकोनाज़ोल 5% ईसी (1 मिली/लीटर)। तापमान 32 डिग्री से अधिक होने पर सल्फर न डालें।',
+    mr: 'पाण्यात मिसळणारे गंधक ८०% डब्ल्यूपी (२.५ ग्रॅम/लिटर) किंवा हेक्साकोनॅझोल ५% ईसी (१ मिली/लिटर). तापमान ३२°C पेक्षा जास्त असताना गंधक टाळा.',
+  },
+  'cropHealth.powderyMildew.phiWarning': {
+    en: 'Wait 5 days after application before harvesting food crops.',
+    hi: 'फसलों की कटाई से पहले दवा डालने के बाद 5 दिनों की प्रतीक्षा करें।',
+    mr: 'औषध फवारणीनंतर काढणीपूर्वी ५ दिवस प्रतीक्षा करा.',
+  },
+  'cropHealth.powderyMildew.safetyNotes': {
+    en: 'Sulfur can cause eye and dermal irritation. Wash thoroughly with clean water.',
+    hi: 'सल्फर से आंखों और त्वचा में जलन हो सकती है। काम के बाद साफ पानी से धोएं।',
+    mr: 'गंधकामुळे डोळे व त्वचेची जळजळ होऊ शकते. स्वच्छ पाण्याने धुवा.',
+  },
+  'cropHealth.healthy.name': {
+    en: 'Healthy Foliage — No Pathogen Detected',
+    hi: 'स्वस्थ पत्ती — कोई रोग नहीं पाया गया',
+    mr: 'निरोगी पान — कोणताही रोग आढळला नाही',
+  },
+  'cropHealth.healthy.crop': {
+    en: 'General Crops',
+    hi: 'सभी सामान्य फसलें',
+    mr: 'सर्व सामान्य पिके',
+  },
+  'cropHealth.healthy.symptoms': {
+    en: 'Uniform deep green leaf texture, fully intact cell walls, and zero chlorosis or necrotic lesions.',
+    hi: 'समान गहरा हरा रंग, पूर्ण रूप से स्वस्थ कोशिकाएं और किसी भी प्रकार के पीलेपन या सड़न का अभाव।',
+    mr: 'समान गडद हिरवा रंग, निरोगी पेशी आणि कोणत्याही प्रकारच्या डागांचा किंवा करप्याचा अभाव.',
+  },
+  'cropHealth.healthy.organic': {
+    en: 'Maintain preventive bio-fertilizer foliar spray (Pseudomonas fluorescens 5 ml/L) once every 15 days.',
+    hi: 'हर 15 दिनों में स्यूडोमोनास फ्लोरोसेंस (5 मिली/लीटर) या जीवामृत का निवारक छिड़काव जारी रखें।',
+    mr: 'दर १५ दिवसांनी स्यूडोमोनास किंवा जीवामृत फवारणी सुरू ठेवा.',
+  },
+  'cropHealth.healthy.chemical': {
+    en: 'Zero chemical fungicide required. Avoid unnecessary prophylactic chemical sprays.',
+    hi: 'किसी रासायनिक कवकनाशी की आवश्यकता नहीं है। अनावश्यक छिड़काव से बचें।',
+    mr: 'कोणत्याही रासायनिक बुरशीनाशकाची आवश्यकता नाही. अनावश्यक फवारणी टाळा.',
+  },
+  'cropHealth.healthy.phiWarning': {
+    en: 'Crops are 100% pesticide-free and safe for immediate harvest and market sale.',
+    hi: 'फसल 100% कीटनाशक मुक्त है और तुरंत कटाई तथा मंडी में बिक्री के लिए सुरक्षित है।',
+    mr: 'पीक १००% कीटकनाशक मुक्त असून त्वरित काढणी व बाजारात विक्रीसाठी सुरक्षित आहे.',
+  },
+  'cropHealth.healthy.safetyNotes': {
+    en: 'Continue balanced N-P-K nutrition and avoid overhead sprinkler wetting during sunset.',
+    hi: 'संतुलित एन-पी-के पोषण जारी रखें और शाम के समय पत्तियों पर फव्वारे से पानी देने से बचें।',
+    mr: 'संतुलित खत व्यवस्थापन ठेवा आणि संध्याकाळी पानांवर पाणी फवारणे टाळा.',
   },
   'cropHealth.diseaseDetection': {
     en: 'Disease detection',
